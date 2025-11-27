@@ -1,0 +1,307 @@
+import { useState, useEffect, useRef } from 'react'
+import styled from 'styled-components'
+// @ts-ignore
+import paperImage1 from '../assets/image-paper1.jpg'
+// @ts-ignore
+import paperImage2 from '../assets/image-paper2.jpg'
+
+// 연도 목록
+const years = [2025, 2024, 2023, 2022, 2021]
+
+// 슬라이드 이미지 데이터 (연도별로 다를 수 있지만, 현재는 동일한 이미지 사용)
+const paperImages = [
+  paperImage1,
+  paperImage2,
+]
+
+const PaperContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 4rem;
+  gap: 2rem;
+  overflow-y: auto;
+  align-items: center;
+  justify-content: center;
+`
+
+const YearSelector = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+`
+
+const YearButton = styled.button`
+  font-size: 6rem;
+  font-weight: bold;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  padding: 1rem 2rem;
+  transition: color 0.3s;
+
+  &:hover {
+    color: #007bff;
+  }
+`
+
+const YearDropdown = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 1rem;
+  background: white;
+  border: 0.2rem solid #e0e0e0;
+  border-radius: 1rem;
+  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  display: ${(props) => (props.$isOpen ? 'flex' : 'none')};
+  flex-direction: column;
+  min-width: 15rem;
+  overflow: hidden;
+`
+
+const YearOption = styled.button`
+  font-size: 3rem;
+  padding: 1.5rem 3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: #333;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 0.1rem solid #e0e0e0;
+  }
+`
+
+// 슬라이드 섹션
+const SlideSection = styled.section`
+  position: relative;
+  width: 100%;
+  max-width: 140rem;
+  height: 180rem;
+  overflow: hidden;
+  border-radius: 2rem;
+`
+
+const SlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: number; $isTransitioning: boolean }>`
+  display: flex;
+  width: ${(props) => (props.$totalSlides + 2) * 100}%;
+  height: 100%;
+  transform: translateX(${(props) => -(props.$currentIndex) * (100 / (props.$totalSlides + 2))}%);
+  transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
+`
+
+const SlideImage = styled.img`
+  width: ${100 / (paperImages.length + 2)}%;
+  height: 100%;
+  object-fit: cover;
+  flex-shrink: 0;
+`
+
+const SlideButton = styled.button<{ $direction: 'left' | 'right' }>`
+  position: absolute;
+  top: 50%;
+  ${(props) => (props.$direction === 'left' ? 'left: 2rem;' : 'right: 2rem;')}
+  transform: translateY(-50%);
+  width: 5rem;
+  height: 5rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-size: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.3s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+  }
+`
+
+const SlideIndicators = styled.div`
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  z-index: 10;
+`
+
+const Indicator = styled.div<{ $active: boolean }>`
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: ${(props) => (props.$active ? 'white' : 'rgba(255, 255, 255, 0.5)')};
+  cursor: pointer;
+  transition: background 0.3s;
+`
+
+const PaperPage = () => {
+  const [selectedYear, setSelectedYear] = useState(2025)
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false)
+  const [slideIndex, setSlideIndex] = useState(1) // 첫 번째 클론 다음부터 시작 (인덱스 1)
+  const [isTransitioning, setIsTransitioning] = useState(true)
+  const yearSelectorRef = useRef<HTMLDivElement>(null)
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (yearSelectorRef.current && !yearSelectorRef.current.contains(event.target as Node)) {
+        setIsYearDropdownOpen(false)
+      }
+    }
+
+    if (isYearDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isYearDropdownOpen])
+
+  // 슬라이드가 클론 위치에 도달했을 때 실제 위치로 이동
+  useEffect(() => {
+    if (!isTransitioning) {
+      // transition이 끝난 후 클론 위치에 있으면 실제 위치로 즉시 이동
+      if (slideIndex === 0) {
+        // 첫 번째 클론에 도달하면 마지막 실제 이미지로 이동
+        setSlideIndex(paperImages.length)
+      } else if (slideIndex === paperImages.length + 1) {
+        // 마지막 클론에 도달하면 첫 번째 실제 이미지로 이동
+        setSlideIndex(1)
+      }
+    }
+  }, [isTransitioning, slideIndex])
+
+  const handleSlidePrev = () => {
+    if (paperImages.length <= 1) return
+
+    if (slideIndex === 1) {
+      // 첫 번째 실제 이미지에서 마지막 클론으로 이동
+      setIsTransitioning(true)
+      setSlideIndex(0)
+      setTimeout(() => {
+        setIsTransitioning(false)
+        setSlideIndex(paperImages.length)
+      }, 500)
+    } else {
+      setIsTransitioning(true)
+      setSlideIndex((prev) => prev - 1)
+      setTimeout(() => {
+        setIsTransitioning(false)
+      }, 500)
+    }
+  }
+
+  const handleSlideNext = () => {
+    if (paperImages.length <= 1) return
+
+    if (slideIndex === paperImages.length) {
+      // 마지막 실제 이미지에서 첫 번째 클론으로 이동
+      setIsTransitioning(true)
+      setSlideIndex(paperImages.length + 1)
+      setTimeout(() => {
+        setIsTransitioning(false)
+        setSlideIndex(1)
+      }, 500)
+    } else {
+      setIsTransitioning(true)
+      setSlideIndex((prev) => prev + 1)
+      setTimeout(() => {
+        setIsTransitioning(false)
+      }, 500)
+    }
+  }
+
+  const handleIndicatorClick = (index: number) => {
+    setIsTransitioning(true)
+    setSlideIndex(index + 1) // 실제 이미지 인덱스는 클론 때문에 +1
+    setTimeout(() => {
+      setIsTransitioning(false)
+    }, 500)
+  }
+
+  const handleYearSelect = (year: number) => {
+    setSelectedYear(year)
+    setIsYearDropdownOpen(false)
+    // 연도 변경 시 슬라이드 초기화
+    setSlideIndex(1)
+  }
+
+  // 실제 슬라이드 인덱스 계산 (클론 제외, 인디케이터용)
+  const actualSlideIndex = slideIndex <= 0 ? paperImages.length - 1 : slideIndex > paperImages.length ? 0 : slideIndex - 1
+
+  return (
+    <PaperContainer>
+      {/* 연도 선택 */}
+      <YearSelector ref={yearSelectorRef}>
+        <YearButton onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}>
+          {selectedYear}
+        </YearButton>
+        <YearDropdown $isOpen={isYearDropdownOpen}>
+          {years.map((year) => (
+            <YearOption key={year} onClick={() => handleYearSelect(year)}>
+              {year}
+            </YearOption>
+          ))}
+        </YearDropdown>
+      </YearSelector>
+
+      {/* 슬라이드 섹션 */}
+      <SlideSection>
+        <SlideWrapper
+          $currentIndex={slideIndex}
+          $totalSlides={paperImages.length}
+          $isTransitioning={isTransitioning}
+        >
+          {/* 마지막 이미지 클론 (무한 루프용) */}
+          <SlideImage src={paperImages[paperImages.length - 1]} alt="Paper slide clone last" />
+          {/* 실제 이미지들 */}
+          {paperImages.map((image, index) => (
+            <SlideImage key={index} src={image} alt={`Paper slide ${index + 1}`} />
+          ))}
+          {/* 첫 번째 이미지 클론 (무한 루프용) */}
+          <SlideImage src={paperImages[0]} alt="Paper slide clone first" />
+        </SlideWrapper>
+        {paperImages.length > 1 && (
+          <>
+            <SlideButton $direction="left" onClick={handleSlidePrev}>
+              ‹
+            </SlideButton>
+            <SlideButton $direction="right" onClick={handleSlideNext}>
+              ›
+            </SlideButton>
+            <SlideIndicators>
+              {paperImages.map((_, index) => (
+                <Indicator
+                  key={index}
+                  $active={index === actualSlideIndex}
+                  onClick={() => handleIndicatorClick(index)}
+                />
+              ))}
+            </SlideIndicators>
+          </>
+        )}
+      </SlideSection>
+    </PaperContainer>
+  )
+}
+
+export default PaperPage
