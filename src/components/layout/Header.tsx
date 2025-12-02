@@ -1,5 +1,6 @@
 import { useLocation, Link } from 'react-router-dom'
 import styled from 'styled-components'
+import { FaHome, FaLaptop, FaFileAlt, FaTrophy, FaChalkboardTeacher } from 'react-icons/fa'
 
 const HeaderContainer = styled.header`
     display: flex;
@@ -22,13 +23,32 @@ const Nav = styled.nav`
 `
 
 const NavIcon = styled(Link)`
-    font-size: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     padding: 1.5rem;
     border-radius: 1rem; /* 10px -> 1rem */
+    text-decoration: none;
+    color: #000;
+    transition: background-color 0.2s;
 
     &:active {
         background-color: #f0f0f0;
     }
+`
+
+const IconWrapper = styled.div`
+    font-size: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`
+
+const NavText = styled.span`
+    font-size: 2.5rem;
+    font-weight: 500;
 `
 
 const getTitle = (pathname: string): string => {
@@ -36,6 +56,7 @@ const getTitle = (pathname: string): string => {
     if (pathname.startsWith('/project')) return 'Project'
     if (pathname.startsWith('/paper')) return 'Paper'
     if (pathname.startsWith('/awards')) return 'Awards'
+    if (pathname.startsWith('/seminar')) return 'Seminar'
     if (pathname.startsWith('/gallery')) return 'Photo'
     return 'WiSoft'
 }
@@ -48,12 +69,36 @@ const Header = () => {
         <HeaderContainer>
             <Title>{title}</Title>
             <Nav>
-                {/* 아이콘으로 교체 필요 */}
-                <NavIcon to="/">Home</NavIcon>
-                <NavIcon to="/project">Project</NavIcon>
-                <NavIcon to="/paper">Paper</NavIcon>
-                <NavIcon to="/awards">Awards</NavIcon>
-                <NavIcon to="/seminar">Seminar</NavIcon>
+                <NavIcon to="/">
+                    <IconWrapper>
+                        <FaHome />
+                    </IconWrapper>
+                    <NavText>Home</NavText>
+                </NavIcon>
+                <NavIcon to="/project">
+                    <IconWrapper>
+                        <FaLaptop />
+                    </IconWrapper>
+                    <NavText>Project</NavText>
+                </NavIcon>
+                <NavIcon to="/paper">
+                    <IconWrapper>
+                        <FaFileAlt />
+                    </IconWrapper>
+                    <NavText>Paper</NavText>
+                </NavIcon>
+                <NavIcon to="/awards">
+                    <IconWrapper>
+                        <FaTrophy />
+                    </IconWrapper>
+                    <NavText>Awards</NavText>
+                </NavIcon>
+                <NavIcon to="/seminar">
+                    <IconWrapper>
+                        <FaChalkboardTeacher />
+                    </IconWrapper>
+                    <NavText>Seminar</NavText>
+                </NavIcon>
             </Nav>
         </HeaderContainer>
     )
