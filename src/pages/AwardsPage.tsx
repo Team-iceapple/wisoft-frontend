@@ -38,21 +38,22 @@ const AwardsContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 4rem;
+  padding: 2rem 4rem 4rem;
   gap: 4rem;
-  overflow-y: auto;
+  overflow: hidden;
 `
 
 const YearSelector = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
   position: relative;
+  flex-shrink: 0;
 `
 
 const YearButton = styled.button`
-  font-size: 6rem;
+  font-size: 4rem;
   font-weight: bold;
   background: none;
   border: none;
@@ -83,8 +84,8 @@ const YearDropdown = styled.div<{ $isOpen: boolean }>`
 `
 
 const YearOption = styled.button`
-  padding: 1.5rem 3rem;
-  font-size: 3rem;
+  padding: 1.2rem 2.5rem;
+  font-size: 2.2rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -104,14 +105,16 @@ const Divider = styled.hr`
   width: 100%;
   border: none;
   border-top: 0.3rem solid #dee2e6;
-  margin: 2rem 0;
+  margin: 1rem 0;
+  flex-shrink: 0;
 `
 
 // 세로 상장 슬라이드 섹션
 const VerticalAwardsSection = styled.section`
   position: relative;
   width: 100%;
-  height: 60rem;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   border-radius: 2rem;
 `
@@ -124,7 +127,7 @@ const VerticalSlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: n
   transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
 `
 
-const VerticalSlideGroup = styled.div`
+const VerticalSlideGroup = styled.div<{ $totalSlides: number }>`
   display: flex;
   gap: 2rem;
   width: 50%; // section 기준으로 각 그룹이 정확히 50% (2개씩 표시)
@@ -149,7 +152,8 @@ const VerticalAwardImage = styled.img`
 const HorizontalAwardsSection = styled.section`
   position: relative;
   width: 100%;
-  height: 50rem;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   border-radius: 2rem;
 `
@@ -162,8 +166,8 @@ const HorizontalSlideWrapper = styled.div<{ $currentIndex: number; $totalSlides:
   transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
 `
 
-const HorizontalSlideGroup = styled.div`
-  width: 100%; // 1개씩 표시
+const HorizontalSlideGroup = styled.div<{ $totalSlides: number }>`
+  width: ${(props) => 100 / (props.$totalSlides + 2)}%; // 전체 그룹 수 + 클론 2개 기준으로 각 그룹 너비 계산
   height: 100%;
   flex-shrink: 0;
   display: flex;
@@ -189,9 +193,9 @@ const AwardsPage = () => {
   const [selectedYear, setSelectedYear] = useState(availableYears[0])
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false)
   const [verticalSlideIndex, setVerticalSlideIndex] = useState(1)
-  const [verticalIsTransitioning, setVerticalIsTransitioning] = useState(true)
+  const [verticalIsTransitioning, setVerticalIsTransitioning] = useState(false)
   const [horizontalSlideIndex, setHorizontalSlideIndex] = useState(1)
-  const [horizontalIsTransitioning, setHorizontalIsTransitioning] = useState(true)
+  const [horizontalIsTransitioning, setHorizontalIsTransitioning] = useState(false)
   const yearSelectorRef = useRef<HTMLDivElement>(null)
 
   const currentAwards = awardsByYear[selectedYear]
@@ -247,29 +251,76 @@ const AwardsPage = () => {
     }
   }
 
-  // 세로 상장 자동 슬라이드 (4초마다)
+  // 세로 상장 자동 슬라이드 (6초마다)
   useEffect(() => {
-    if (verticalGroups.length <= 1) return
+    // 세로 상장을 2개씩 그룹화
+    const groups: string[][] = []
+    for (let i = 0; i < verticalAwards.length; i += 2) {
+      groups.push(verticalAwards.slice(i, i + 2))
+    }
+    
+    const groupsLength = groups.length
+    // 이미지가 3개 이상일 때만 자동 슬라이드 (그룹이 2개 이상)
+    if (verticalAwards.length < 3 || groupsLength <= 1) return
+
+    let timeoutId: NodeJS.Timeout | null = null
 
     const slideInterval = setInterval(() => {
-      handleVerticalSlideNext()
-    }, 4000)
+      setVerticalIsTransitioning(true)
+      setVerticalSlideIndex((prevIndex) => {
+        if (prevIndex === groupsLength) {
+          // 마지막 실제 이미지에서 첫 번째 클론으로 이동
+          return groupsLength + 1
+        } else {
+          return prevIndex + 1
+        }
+      })
+      
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        setVerticalIsTransitioning(false)
+      }, 500)
+    }, 6000)
 
-    return () => clearInterval(slideInterval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear, verticalGroups.length])
+    return () => {
+      clearInterval(slideInterval)
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [selectedYear, verticalAwards.length])
 
   // 가로 상장 자동 슬라이드 (6초마다)
   useEffect(() => {
-    if (horizontalGroups.length <= 1) return
+    // 가로 상장을 1개씩 그룹화
+    const groups: string[][] = horizontalAwards.map(award => [award])
+    const groupsLength = groups.length
+    
+    // 이미지가 2개 이상일 때만 자동 슬라이드
+    if (horizontalAwards.length < 2 || groupsLength <= 1) return
+
+    let timeoutId: NodeJS.Timeout | null = null
 
     const slideInterval = setInterval(() => {
-      handleHorizontalSlideNext()
+      setHorizontalIsTransitioning(true)
+      setHorizontalSlideIndex((prevIndex) => {
+        if (prevIndex === groupsLength) {
+          // 마지막 실제 이미지에서 첫 번째 클론으로 이동
+          return groupsLength + 1
+        } else {
+          return prevIndex + 1
+        }
+      })
+      
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        setHorizontalIsTransitioning(false)
+      }, 500)
     }, 6000)
 
-    return () => clearInterval(slideInterval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear, horizontalGroups.length])
+    return () => {
+      clearInterval(slideInterval)
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [selectedYear, horizontalAwards.length])
 
   // 세로 상장 슬라이드가 클론 위치에 도달했을 때 실제 위치로 이동
   useEffect(() => {
@@ -347,7 +398,7 @@ const AwardsPage = () => {
           >
             {/* 마지막 그룹 클론 */}
             {verticalGroups.length > 0 && (
-              <VerticalSlideGroup>
+              <VerticalSlideGroup $totalSlides={verticalGroups.length}>
                 {verticalGroups[verticalGroups.length - 1].map((image, idx) => (
                   <VerticalAwardImage key={`clone-last-${idx}`} src={image} alt={`Vertical Award clone last ${idx + 1}`} />
                 ))}
@@ -358,7 +409,7 @@ const AwardsPage = () => {
             )}
             {/* 실제 그룹들 */}
             {verticalGroups.map((group, groupIndex) => (
-              <VerticalSlideGroup key={groupIndex}>
+              <VerticalSlideGroup key={groupIndex} $totalSlides={verticalGroups.length}>
                 {group.map((image, idx) => (
                   <VerticalAwardImage key={`${groupIndex}-${idx}`} src={image} alt={`Vertical Award ${groupIndex + 1}-${idx + 1}`} />
                 ))}
@@ -369,7 +420,7 @@ const AwardsPage = () => {
             ))}
             {/* 첫 번째 그룹 클론 */}
             {verticalGroups.length > 0 && (
-              <VerticalSlideGroup>
+              <VerticalSlideGroup $totalSlides={verticalGroups.length}>
                 {verticalGroups[0].map((image, idx) => (
                   <VerticalAwardImage key={`clone-first-${idx}`} src={image} alt={`Vertical Award clone first ${idx + 1}`} />
                 ))}
@@ -395,7 +446,7 @@ const AwardsPage = () => {
           >
             {/* 마지막 그룹 클론 */}
             {horizontalGroups.length > 0 && (
-              <HorizontalSlideGroup>
+              <HorizontalSlideGroup $totalSlides={horizontalGroups.length}>
                 <HorizontalAwardImage
                   src={horizontalGroups[horizontalGroups.length - 1][0]}
                   alt="Horizontal Award clone last"
@@ -404,7 +455,7 @@ const AwardsPage = () => {
             )}
             {/* 실제 그룹들 */}
             {horizontalGroups.map((group, groupIndex) => (
-              <HorizontalSlideGroup key={groupIndex}>
+              <HorizontalSlideGroup key={groupIndex} $totalSlides={horizontalGroups.length}>
                 <HorizontalAwardImage
                   src={group[0]}
                   alt={`Horizontal Award ${groupIndex + 1}`}
@@ -413,7 +464,7 @@ const AwardsPage = () => {
             ))}
             {/* 첫 번째 그룹 클론 */}
             {horizontalGroups.length > 0 && (
-              <HorizontalSlideGroup>
+              <HorizontalSlideGroup $totalSlides={horizontalGroups.length}>
                 <HorizontalAwardImage
                   src={horizontalGroups[0][0]}
                   alt="Horizontal Award clone first"

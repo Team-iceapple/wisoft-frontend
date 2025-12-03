@@ -6,20 +6,20 @@ const HeaderContainer = styled.header`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 3rem 4rem;
+    padding: 1.5rem 3rem;
     background-color: #ffffff;
-    border-bottom: 0.2rem solid #eeeeee; /* 2px -> 0.2rem */
-    height: 15rem; /* 150px -> 15rem */
+    border-bottom: 0.2rem solid #eeeeee;
+    height: 8rem;
 `
 
 const Title = styled.h1`
-    font-size: 6rem;
+    font-size: 3.2rem;
     font-weight: bold;
 `
 
 const Nav = styled.nav`
     display: flex;
-    gap: 3rem;
+    gap: 1.5rem;
 `
 
 const NavIcon = styled(Link)`
@@ -27,9 +27,9 @@ const NavIcon = styled(Link)`
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 1.5rem;
-    border-radius: 1rem; /* 10px -> 1rem */
+    gap: 0.3rem;
+    padding: 0.8rem;
+    border-radius: 0.8rem;
     text-decoration: none;
     color: #000;
     transition: background-color 0.2s;
@@ -40,14 +40,14 @@ const NavIcon = styled(Link)`
 `
 
 const IconWrapper = styled.div`
-    font-size: 6rem;
+    font-size: 3.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
 `
 
 const NavText = styled.span`
-    font-size: 2.5rem;
+    font-size: 1.5rem;
     font-weight: 500;
 `
 

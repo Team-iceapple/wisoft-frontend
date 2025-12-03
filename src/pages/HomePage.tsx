@@ -13,8 +13,8 @@ const slideImages = [
 
 // 일주일 일정 데이터 (예시 - 실제 데이터로 교체 필요)
 const weeklySchedule = [
-  { date: '2025-01-15', title: '프로젝트 발표회' },
-  { date: '2025-01-17', title: '연구실 회의' },
+  { date: '25/01/15(금)', title: '프로젝트 발표회' },
+  { date: '25/01/17(일)', title: '연구실 회의' },
 ]
 
 // 프로젝트 데이터 (예시 - 실제 데이터로 교체 필요)
@@ -40,18 +40,19 @@ const HomeContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 4rem;
-  gap: 4rem;
-  overflow-y: auto;
+  padding: 2rem 3rem;
+  gap: 2rem;
+  overflow: hidden;
 `
 
 // 슬라이드 섹션
 const SlideSection = styled.section`
   position: relative;
   width: 100%;
-  height: 75rem;
+  height: 35rem;
   overflow: hidden;
   border-radius: 2rem;
+  flex-shrink: 0;
 `
 
 const SlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: number; $isTransitioning: boolean }>`
@@ -66,19 +67,20 @@ const SlideImage = styled.img`
   width: ${100 / (slideImages.length + 2)}%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   flex-shrink: 0;
 `
 
 const SlideButton = styled.button<{ $direction: 'left' | 'right' }>`
   position: absolute;
   top: 50%;
-  ${(props) => (props.$direction === 'left' ? 'left: 2rem;' : 'right: 2rem;')}
+  ${(props) => (props.$direction === 'left' ? 'left: 1.5rem;' : 'right: 1.5rem;')}
   transform: translateY(-50%);
-  width: 5rem;
-  height: 5rem;
+  width: 4rem;
+  height: 4rem;
   background: rgba(0, 0, 0, 0.5);
   color: white;
-  font-size: 3rem;
+  font-size: 2.2rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -116,24 +118,25 @@ const IntroSection = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3rem;
-  padding: 4rem 0;
+  gap: 1rem;
+  padding: 1rem 0;
   position: relative;
+  flex-shrink: 0;
 `
 
 const IntroTitle = styled.h1`
-  font-size: 6rem;
+  font-size: 2.5rem;
   font-weight: bold;
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
 `
 
 const IntroText = styled.div`
-  font-size: 2.4rem;
-  line-height: 1.8;
+  font-size: 1.6rem;
+  line-height: 1.5;
   text-align: center;
   max-width: 112.5rem;
-  color: #333;
+  color: #495057;
 `
 
 const GradientCircle = styled.div`
@@ -150,80 +153,94 @@ const GradientCircle = styled.div`
 // 하단 레이아웃
 const BottomSection = styled.section`
   display: flex;
-  gap: 4rem;
+  gap: 2rem;
   flex: 1;
-  min-height: 50rem;
+  min-height: 0;
+  overflow: hidden;
 `
 
 const LeftColumn = styled.div`
   flex: 1;
-  padding: 3rem;
+  padding: 2rem;
   background: #f8f9fa;
   border-radius: 2rem;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `
 
 const RightColumn = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 2rem;
+  min-height: 0;
 `
 
 const ScheduleTitle = styled.h2`
-  font-size: 3.6rem;
+  font-size: 2.5rem;
   font-weight: bold;
-  margin-bottom: 3rem;
-  color: #333;
+  margin-bottom: 1.5rem;
+  color: #666666;
 `
 
 const Timeline = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.2rem;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 `
 
 const TimelineItem = styled.div`
   display: flex;
-  gap: 2rem;
-  padding: 2rem;
+  gap: 1.5rem;
+  padding: 1.5rem;
   background: white;
   border-radius: 1rem;
   border-left: 0.25rem solid #007bff;
 `
 
 const TimelineDate = styled.div`
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: bold;
   color: #007bff;
   min-width: 12.5rem;
 `
 
 const TimelineContent = styled.div`
-  font-size: 2.2rem;
+  font-size: 1.7rem;
   color: #333;
 `
 
 const ProjectBox = styled.div`
   flex: 1;
-  padding: 3rem;
+  padding: 2rem;
   background: #f8f9fa;
   border-radius: 2rem;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `
 
 const NewsBox = styled.div`
   flex: 1;
-  padding: 3rem;
+  padding: 2rem;
   background: #f8f9fa;
   border-radius: 2rem;
   position: relative;
   overflow: hidden;
+  min-height: 0;
 `
 
 const BoxTitle = styled.h3`
-  font-size: 3.6rem;
+  font-size: 2.5rem;
   font-weight: bold;
-  margin-bottom: ${(props) => (props.className === 'project-title' ? '3rem' : '2rem')};
-  color: #333;
+  margin-bottom: ${(props) => (props.className === 'project-title' ? '1.5rem' : '1rem')};
+  color: #737373;
 `
 
 const ProjectList = styled.ul`
@@ -231,11 +248,14 @@ const ProjectList = styled.ul`
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 `
 
 const ProjectItem = styled.li`
-  font-size: 2.4rem;
+  font-size: 1.8rem;
   padding-left: 2rem;
   position: relative;
   color: #333;
@@ -245,7 +265,7 @@ const ProjectItem = styled.li`
     position: absolute;
     left: 0;
     color: #007bff;
-    font-size: 3rem;
+    font-size: 2.2rem;
   }
 `
 
@@ -280,12 +300,12 @@ const NewsList = styled.div<{ $itemCount: number }>`
 `
 
 const NewsItem = styled.div`
-  font-size: 2.4rem;
-  padding: 2rem;
+  font-size: 1.8rem;
+  padding: 1.5rem;
   background: white;
   border-radius: 1rem;
   color: #333;
-  min-height: 8rem;
+  min-height: 6rem;
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -423,12 +443,10 @@ const HomePage = () => {
 
       {/* 소개 섹션 */}
       <IntroSection>
-        <IntroTitle>HBNU WISOFT.IO</IntroTitle>
+        <IntroTitle>문구 추천 받음..</IntroTitle>
         <IntroText>
           국립한밭대학교 와이소프트(WiSoft)는 프로그래밍으로 미래를 설계하는 소프트웨어 중심의 연구실입니다.
           <br />
-          <br />
-          박현주 교수님의 지도 아래, 탄탄한 이론을 바탕으로 실제 동작하는 소프트웨어를 만드는 데 집중합니다. 
           <br />
           다양한 프로젝트 경험을 통해 실무 역량을 갖추고 미래 기술을 선도하는 SW 핵심 인재 양성을 목표로 합니다.
         </IntroText>
@@ -441,7 +459,7 @@ const HomePage = () => {
         <LeftColumn>
           {upcomingSchedule.length > 0 ? (
             <>
-              <ScheduleTitle>이번 주 일정</ScheduleTitle>
+              <ScheduleTitle>연구실 일정</ScheduleTitle>
               <Timeline>
                 {upcomingSchedule.map((item, index) => (
                   <TimelineItem key={index}>
@@ -459,7 +477,7 @@ const HomePage = () => {
         {/* 오른쪽: 프로젝트 & 뉴스 */}
         <RightColumn>
           <ProjectBox>
-            <BoxTitle className="project-title">Current Project</BoxTitle>
+            <BoxTitle className="project-title">진행중인 프로젝트</BoxTitle>
             <ProjectList>
               {currentProjects.map((project, index) => (
                 <ProjectItem key={index}>{project}</ProjectItem>
@@ -468,7 +486,7 @@ const HomePage = () => {
           </ProjectBox>
 
           <NewsBox>
-            <BoxTitle>WiSoft News</BoxTitle>
+            <BoxTitle>와이소프트 소식</BoxTitle>
             <NewsContainer>
               <NewsList $itemCount={newsItems.length}>
                 {/* 원본 뉴스 항목들 */}

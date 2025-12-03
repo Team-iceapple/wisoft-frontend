@@ -15,13 +15,13 @@ const theme = {
 }
 
 const KioskWrapper = styled.div`
-    /* --- ★ 1. 세로 4K (2160x3840)로 크기 고정 --- */
-    width: 2160px;
-    height: 3840px;
+    /* --- ★ 1. 1440x2560 사이즈로 크기 고정 --- */
+    width: 1440px;
+    height: 2560px;
 
     /* --- ★ 2. 뷰포트(브라우저 창)에 맞게 스케일링 --- */
-    --scale-x: calc(100vw / 2160);
-    --scale-y: calc(100vh / 3840);
+    --scale-x: calc(100vw / 1440);
+    --scale-y: calc(100vh / 2560);
     --scale: min(var(--scale-x), var(--scale-y));
 
     transform: scale(var(--scale));

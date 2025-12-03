@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { QRCodeSVG } from 'qrcode.react'
+
+const ITEMS_PER_PAGE = 6
 // @ts-ignore
 import projectImage1 from '../assets/image-project1.jpg'
 // @ts-ignore
@@ -115,21 +117,22 @@ const Container = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 4rem;
-  gap: 4rem;
-  overflow-y: auto;
+  padding: 2rem 4rem 4rem;
+  gap: 2rem;
+  overflow: hidden;
 `
 
 const YearSelector = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
   position: relative;
+  flex-shrink: 0;
 `
 
 const YearButton = styled.button`
-  font-size: 6rem;
+  font-size: 4rem;
   font-weight: bold;
   background: none;
   border: none;
@@ -160,8 +163,8 @@ const YearDropdown = styled.div<{ $isOpen: boolean }>`
 `
 
 const YearOption = styled.button`
-  padding: 1.5rem 3rem;
-  font-size: 3rem;
+  padding: 1.2rem 2.5rem;
+  font-size: 2.2rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -180,28 +183,32 @@ const YearOption = styled.button`
 const ProjectsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 4rem;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2.5rem;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
 `
 
 const ProjectCard = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
-  border-radius: 2rem;
+  border-radius: 1.5rem;
   overflow: hidden;
   background: #f8f9fa;
+  min-height: 0;
 `
 
 const SpecialNote = styled.div`
   position: absolute;
-  top: 2rem;
-  left: 2rem;
-  right: 2rem;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
   background: rgba(255, 255, 255, 0.9);
-  padding: 1.5rem 2rem;
-  border-radius: 1rem;
-  font-size: 2rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 0.6rem;
+  font-size: 1.2rem;
   font-weight: bold;
   z-index: 10;
   text-align: center;
@@ -210,11 +217,12 @@ const SpecialNote = styled.div`
 const ProjectImageWrapper = styled.div`
   position: relative;
   width: 100%;
-  height: 50rem;
+  flex: 1;
+  min-height: 22rem;
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s;
-  border-radius: 2rem;
+  border-radius: 1.5rem;
 
   &:hover {
     transform: scale(1.02);
@@ -226,7 +234,7 @@ const ProjectImage = styled.img`
   height: 100%;
   object-fit: cover;
   opacity: 0.7;
-  border-radius: 2rem;
+  border-radius: 1.5rem;
 `
 
 const ProjectInfo = styled.div`
@@ -235,29 +243,30 @@ const ProjectInfo = styled.div`
   left: 0;
   right: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  padding: 4rem 3rem 3rem;
+  padding: 3rem 2rem 2rem;
   color: white;
 `
 
 const ProjectName = styled.h2`
-  font-size: 4.5rem;
+  font-size: 2.2rem;
   font-weight: bold;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 `
 
 const Participants = styled.div`
-  font-size: 2.4rem;
-  line-height: 1.6;
+  font-size: 1.4rem;
+  line-height: 1.4;
 `
 
 const InfoText = styled.div`
   text-align: center;
-  font-size: 2.4rem;
+  font-size: 1.6rem;
   color: #666;
-  margin-top: 2rem;
-  padding: 2rem;
+  margin-top: 0;
+  padding: 1.2rem;
   background: #f8f9fa;
   border-radius: 1rem;
+  flex-shrink: 0;
 `
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
@@ -289,7 +298,7 @@ const ModalContent = styled.div`
 `
 
 const ModalTitle = styled.h2`
-  font-size: 4rem;
+  font-size: 3rem;
   font-weight: bold;
   text-align: center;
   margin: 0;
@@ -328,21 +337,58 @@ const ModalCloseButton = styled.button`
 `
 
 const ModalLink = styled.div`
-  font-size: 2.4rem;
+  font-size: 1.8rem;
   color: #007bff;
   word-break: break-all;
   text-align: center;
 `
 
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  flex-shrink: 0;
+`
+
+const PaginationIndicator = styled.button<{ $active: boolean }>`
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: ${(props) => (props.$active ? '#333' : '#ccc')};
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  padding: 0;
+
+  &:hover {
+    transform: scale(1.3);
+    background: ${(props) => (props.$active ? '#333' : '#999')};
+  }
+`
+
 const ProjectPage = () => {
   const [selectedYear, setSelectedYear] = useState(availableYears[0])
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
   const [selectedProject, setSelectedProject] = useState<{
     projectName: string
     qrLink: string
   } | null>(null)
 
   const currentProjects = projectsByYear[selectedYear] || []
+
+  // 연도 변경 시 첫 페이지로 리셋
+  useEffect(() => {
+    setCurrentPage(0)
+  }, [selectedYear])
+
+  // 페이지네이션 계산
+  const totalPages = Math.ceil(currentProjects.length / ITEMS_PER_PAGE)
+  const startIndex = currentPage * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const displayedProjects = currentProjects.slice(startIndex, endIndex)
 
   const handleYearClick = () => {
     setIsYearDropdownOpen(!isYearDropdownOpen)
@@ -351,6 +397,10 @@ const ProjectPage = () => {
   const handleYearSelect = (year: number) => {
     setSelectedYear(year)
     setIsYearDropdownOpen(false)
+  }
+
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex)
   }
 
   const handleProjectClick = (project: typeof currentProjects[0]) => {
@@ -390,8 +440,8 @@ const ProjectPage = () => {
       </InfoText>
 
       <ProjectsGrid>
-        {currentProjects.map((project, index) => (
-          <ProjectCard key={index}>
+        {displayedProjects.map((project, index) => (
+          <ProjectCard key={startIndex + index}>
             {project.specialNote && <SpecialNote>{project.specialNote}</SpecialNote>}
             <ProjectImageWrapper onClick={() => handleProjectClick(project)}>
               <ProjectImage src={project.image} alt={project.projectName} />
@@ -403,6 +453,19 @@ const ProjectPage = () => {
           </ProjectCard>
         ))}
       </ProjectsGrid>
+
+      {totalPages > 1 && (
+        <PaginationContainer>
+          {Array.from({ length: totalPages }).map((_, index) => (
+            <PaginationIndicator
+              key={index}
+              $active={index === currentPage}
+              onClick={() => handlePageChange(index)}
+              aria-label={`페이지 ${index + 1}`}
+            />
+          ))}
+        </PaginationContainer>
+      )}
 
       <ModalOverlay 
         $isOpen={!!selectedProject} 

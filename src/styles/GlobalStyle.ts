@@ -7,6 +7,11 @@ export const GlobalStyle = createGlobalStyle`
         box-sizing: border-box;
     }
 
+    html {
+        /* 1440x2560 해상도 기준 기본 폰트 크기 설정 */
+        font-size: 20px; /* 1440px 기준으로 적절한 크기 */
+    }
+
     html, body, #root {
         width: 100%;
         height: 100%;

@@ -19,9 +19,9 @@ const PaperContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 4rem;
+  padding: 2rem 4rem 4rem;
   gap: 2rem;
-  overflow-y: auto;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
 `
@@ -32,10 +32,11 @@ const YearSelector = styled.div`
   align-items: center;
   justify-content: center;
   margin-bottom: 0;
+  flex-shrink: 0;
 `
 
 const YearButton = styled.button`
-  font-size: 6rem;
+  font-size: 4rem;
   font-weight: bold;
   background: none;
   border: none;
@@ -67,8 +68,8 @@ const YearDropdown = styled.div<{ $isOpen: boolean }>`
 `
 
 const YearOption = styled.button`
-  font-size: 3rem;
-  padding: 1.5rem 3rem;
+  font-size: 2.2rem;
+  padding: 1.2rem 2.5rem;
   background: none;
   border: none;
   cursor: pointer;
@@ -90,7 +91,9 @@ const SlideSection = styled.section`
   position: relative;
   width: 100%;
   max-width: 140rem;
-  height: 180rem;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   border-radius: 2rem;
 `
@@ -113,13 +116,13 @@ const SlideImage = styled.img`
 const SlideButton = styled.button<{ $direction: 'left' | 'right' }>`
   position: absolute;
   top: 50%;
-  ${(props) => (props.$direction === 'left' ? 'left: 2rem;' : 'right: 2rem;')}
+  ${(props) => (props.$direction === 'left' ? 'left: 1.5rem;' : 'right: 1.5rem;')}
   transform: translateY(-50%);
-  width: 5rem;
-  height: 5rem;
+  width: 4rem;
+  height: 4rem;
   background: rgba(0, 0, 0, 0.5);
   color: white;
-  font-size: 3rem;
+  font-size: 2.2rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -139,17 +142,25 @@ const SlideIndicators = styled.div`
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   z-index: 10;
 `
 
-const Indicator = styled.div<{ $active: boolean }>`
-  width: 1rem;
-  height: 1rem;
+const Indicator = styled.button<{ $active: boolean }>`
+  width: 1.2rem;
+  height: 1.2rem;
   border-radius: 50%;
-  background: ${(props) => (props.$active ? 'white' : 'rgba(255, 255, 255, 0.5)')};
+  background: ${(props) => (props.$active ? '#333' : '#ccc')};
+  border: none;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.2s;
+  padding: 0;
+  box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    transform: scale(1.3);
+    background: ${(props) => (props.$active ? '#333' : '#999')};
+  }
 `
 
 const PaperPage = () => {

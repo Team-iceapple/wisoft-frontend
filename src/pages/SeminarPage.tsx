@@ -15,34 +15,34 @@ const Container = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 2rem 4rem;
-  gap: 1.5rem;
+  padding: 2rem 3rem;
+  gap: 1rem;
   overflow: hidden;
 `
 
 const LoadingText = styled.p`
-  font-size: 4rem;
+  font-size: 3rem;
   text-align: center;
   color: #666;
-  padding: 4rem;
+  padding: 3rem;
 `
 
 const ErrorText = styled.p`
-  font-size: 4rem;
+  font-size: 3rem;
   text-align: center;
   color: #dc3545;
-  padding: 4rem;
+  padding: 3rem;
 `
 
 const GridContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 3rem;
+  gap: 2rem;
   width: 100%;
   flex: 1;
-  padding: 1rem 0;
+  padding: 0.5rem 0;
   min-height: 0;
-  max-width: 90%;
+  max-width: 95%;
   margin: 0 auto;
 `
 
@@ -81,13 +81,13 @@ const CardCoverImage = styled.img`
 
 const CardIcon = styled.img`
   position: absolute;
-  top: 2rem;
-  right: 2rem;
-  width: 8rem;
-  height: 8rem;
-  border-radius: 1rem;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 0.8rem;
   background: white;
-  padding: 1rem;
+  padding: 0.6rem;
   box-sizing: border-box;
   object-fit: contain;
   box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.1);
@@ -98,13 +98,13 @@ const CardContent = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0.8rem;
   background: white;
   min-height: 0;
 `
 
 const CardTitle = styled.h3`
-  font-size: 4rem;
+  font-size: 2rem;
   font-weight: bold;
   text-align: center;
   color: #333;
@@ -122,7 +122,7 @@ const PaginationContainer = styled.div`
   justify-content: center;
   align-items: center;
   gap: 1.5rem;
-  padding: 0.5rem 0;
+  padding: 1rem 0;
   flex-shrink: 0;
 `
 
@@ -150,7 +150,7 @@ const EmptyState = styled.div`
   height: 100%;
   gap: 2rem;
   color: #666;
-  font-size: 3.5rem;
+  font-size: 2.5rem;
 `
 
 const SeminarPage = () => {
@@ -162,7 +162,7 @@ const SeminarPage = () => {
   useEffect(() => {
     const fetchSeminars = async () => {
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://home-api.wisoft.io/api'
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
         const response = await fetch(`${apiBaseUrl}/notion/seminars`)
 
         if (!response.ok) {

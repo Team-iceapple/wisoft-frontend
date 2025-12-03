@@ -30,3 +30,15 @@ declare module '*.webp' {
   export default src
 }
 
+import 'styled-components'
+
+declare module 'styled-components' {
+  export interface DefaultTheme {
+    colors: {
+      primary: string
+      background: string
+      text: string
+    }
+  }
+}
+
