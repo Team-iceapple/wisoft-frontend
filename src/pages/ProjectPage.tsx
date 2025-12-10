@@ -15,67 +15,77 @@ const projectsByYear: Record<number, Array<{
   projectName: string
   participants: string[]
   qrLink?: string
+  status: '진행중' | '완료됨'
 }>> = {
   2025: [
     {
       image: projectImage1,
-      specialNote: '포브스 선정 2025 가장 영향력있는 프로젝트',
+      specialNote: '포브스 선정 가장 영향력있는 프로젝트',
       projectName: 'Iceapple',
       participants: ['유재영', '문동민', '김나연', '신보연', '이선혜', '이은채', '이혜현', '임예은', '정예환'],
       qrLink: 'https://iceapple.wisoft.io',
+      status: '진행중',
     },
     {
       image: projectImage2,
       projectName: '학슐랭',
       participants: ['김나연', '이은채', '이혜현', '정예환'],
       qrLink: 'https://hakchulraeng.wisoft.io',
+      status: '진행중',
     },
     {
       image: projectImage1,
-      specialNote: '2025년 신규 프로젝트',
+      specialNote: '신규 프로젝트',
       projectName: '프로젝트 알파',
       participants: ['김철수', '이영희', '박민수', '최지영'],
       qrLink: 'https://project-alpha.wisoft.io',
+      status: '진행중',
     },
     {
       image: projectImage2,
       projectName: '프로젝트 베타',
       participants: ['정수진', '강동욱', '윤서연'],
       qrLink: 'https://project-beta.wisoft.io',
+      status: '완료됨',
     },
     {
       image: projectImage1,
       projectName: '프로젝트 감마',
       participants: ['조현우', '임도현', '한소희', '오준혁', '배수진'],
       qrLink: 'https://project-gamma.wisoft.io',
+      status: '완료됨',
     },
     {
       image: projectImage2,
-      specialNote: '2025년 하반기 프로젝트',
+      specialNote: '하반기 프로젝트',
       projectName: '프로젝트 델타',
       participants: ['송민준', '김하늘', '이준호'],
       qrLink: 'https://project-delta.wisoft.io',
+      status: '진행중',
     },
     {
       image: projectImage1,
       projectName: '프로젝트 엡실론',
       participants: ['장예린', '홍길동', '김미영', '이태호', '박지훈', '최유진'],
       qrLink: 'https://project-epsilon.wisoft.io',
+      status: '완료됨',
     },
   ],
   2024: [
     {
       image: projectImage1,
-      specialNote: '2024년 우수 프로젝트',
+      specialNote: '우수 프로젝트',
       projectName: '프로젝트 A',
       participants: ['참여자1', '참여자2', '참여자3'],
       qrLink: 'https://project-a.wisoft.io',
+      status: '완료됨',
     },
     {
       image: projectImage2,
       projectName: '프로젝트 B',
       participants: ['참여자4', '참여자5'],
       qrLink: 'https://project-b.wisoft.io',
+      status: '완료됨',
     },
   ],
   2023: [
@@ -84,6 +94,7 @@ const projectsByYear: Record<number, Array<{
       projectName: '프로젝트 C',
       participants: ['참여자6', '참여자7'],
       qrLink: 'https://project-c.wisoft.io',
+      status: '완료됨',
     },
   ],
 }
@@ -212,6 +223,20 @@ const SpecialNote = styled.div`
   font-weight: bold;
   z-index: 10;
   text-align: center;
+`
+
+const StatusBadge = styled.div<{ $status: '진행중' | '완료됨'; $hasSpecialNote: boolean }>`
+  position: absolute;
+  top: ${(props) => (props.$hasSpecialNote ? '4.5rem' : '1rem')};
+  right: 1rem;
+  background: ${(props) => (props.$status === '진행중' ? 'rgba(52, 152, 219, 0.9)' : 'rgba(46, 204, 113, 0.9)')};
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  z-index: 10;
+  white-space: nowrap;
 `
 
 const ProjectImageWrapper = styled.div`
@@ -424,17 +449,6 @@ const ProjectPage = () => {
 
   return (
     <Container>
-      <YearSelector>
-        <YearButton onClick={handleYearClick}>{selectedYear}</YearButton>
-        <YearDropdown $isOpen={isYearDropdownOpen}>
-          {availableYears.map((year) => (
-            <YearOption key={year} onClick={() => handleYearSelect(year)}>
-              {year}
-            </YearOption>
-          ))}
-        </YearDropdown>
-      </YearSelector>
-
       <InfoText>
         배너 사진을 클릭하면 배포 QR을 볼 수 있습니다
       </InfoText>
@@ -443,6 +457,9 @@ const ProjectPage = () => {
         {displayedProjects.map((project, index) => (
           <ProjectCard key={startIndex + index}>
             {project.specialNote && <SpecialNote>{project.specialNote}</SpecialNote>}
+            <StatusBadge $status={project.status} $hasSpecialNote={!!project.specialNote}>
+              {project.status}
+            </StatusBadge>
             <ProjectImageWrapper onClick={() => handleProjectClick(project)}>
               <ProjectImage src={project.image} alt={project.projectName} />
               <ProjectInfo>

@@ -24,14 +24,19 @@ const currentProjects = [
 ]
 
 // 뉴스 데이터 (예시 - 실제 데이터로 교체 필요)
-const newsItems = [
-  '최근 정보통신기술 어쩌구.. (2025) (이은채, 이혜현, 김나연, 정예환) 논문 등록을 축하합니다 🎉',
-  '대학원생 문동민 생일 축하했습니다 🎂',
-  '새로운 프로젝트 시작!',
-  '모바일융합공학과 1기 졸업 축하할 예정입니다',
-  'Test 세미나 드디어 끝난 거 축하합니다',
-  '김바나나 상 받았다',
-  '모바비 상 받았다',
+interface NewsItem {
+  title: string
+  content: string
+}
+
+const newsItems: NewsItem[] = [
+  { title: '논문 등록 축하', content: '최근 정보통신기술 어쩌구.. (2025) (이은채, 이혜현, 김나연, 정예환) 논문 등록을 축하합니다 🎉' },
+  { title: '생일 축하', content: '대학원생 문동민 생일 축하했습니다 🎂' },
+  { title: '새 프로젝트', content: '새로운 프로젝트 시작!' },
+  { title: '졸업 축하', content: '모바일융합공학과 1기 졸업 축하할 예정입니다' },
+  { title: '세미나 완료', content: 'Test 세미나 드디어 끝난 거 축하합니다' },
+  { title: '수상 소식', content: '김바나나 상 받았다' },
+  { title: '수상 소식', content: '모바비 상 받았다' },
 ]
 
 // 스타일 컴포넌트
@@ -125,7 +130,7 @@ const IntroSection = styled.section`
 `
 
 const IntroTitle = styled.h1`
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   text-align: center;
   margin-bottom: 0.5rem;
@@ -179,7 +184,7 @@ const RightColumn = styled.div`
 `
 
 const ScheduleTitle = styled.h2`
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
   color: #666666;
@@ -211,7 +216,7 @@ const TimelineDate = styled.div`
 `
 
 const TimelineContent = styled.div`
-  font-size: 1.7rem;
+  font-size: 1.6rem;
   color: #333;
 `
 
@@ -237,7 +242,7 @@ const NewsBox = styled.div`
 `
 
 const BoxTitle = styled.h3`
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
   margin-bottom: ${(props) => (props.className === 'project-title' ? '1.5rem' : '1rem')};
   color: #737373;
@@ -255,7 +260,7 @@ const ProjectList = styled.ul`
 `
 
 const ProjectItem = styled.li`
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   padding-left: 2rem;
   position: relative;
   color: #333;
@@ -272,48 +277,57 @@ const ProjectItem = styled.li`
 const NewsContainer = styled.div`
   position: relative;
   height: 100%;
+  width: 100%;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 `
 
-const scrollTextVertical = keyframes`
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-50%);
-  }
-`
-
-const NewsList = styled.div<{ $itemCount: number }>`
+const NewsCardWrapper = styled.div<{ $currentIndex: number; $totalCards: number; $isTransitioning: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: ${(props) => (props.$totalCards + 2) * 100}%;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  animation: ${scrollTextVertical} ${(props) => props.$itemCount * 3}s linear infinite;
-  
-  /* 무한 루프를 위해 뉴스 항목을 두 번 복제 */
-  &::after {
-    content: '';
-    display: block;
-  }
+  transform: translateY(${(props) => -(props.$currentIndex) * (100 / (props.$totalCards + 2))}%);
+  transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
 `
 
-const NewsItem = styled.div`
-  font-size: 1.8rem;
-  padding: 1.5rem;
+const NewsCard = styled.div<{ $totalCards: number }>`
+  width: 100%;
+  height: ${(props) => 100 / (props.$totalCards + 2)}%;
+  flex-shrink: 0;
+  padding: 2rem;
   background: white;
   border-radius: 1rem;
-  color: #333;
-  min-height: 6rem;
   display: flex;
-  align-items: center;
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+`
+
+const NewsCardTitle = styled.div`
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #333;
+`
+
+const NewsCardContent = styled.div`
+  font-size: 1.6rem;
+  color: #666;
+  line-height: 1.5;
+  flex: 1;
 `
 
 const HomePage = () => {
   const [slideIndex, setSlideIndex] = useState(1) // 첫 번째 클론 다음부터 시작 (인덱스 1)
   const [isTransitioning, setIsTransitioning] = useState(true)
+  const [newsCardIndex, setNewsCardIndex] = useState(1) // 뉴스 카드 인덱스
+  const [isNewsTransitioning, setIsNewsTransitioning] = useState(true)
 
   // 슬라이드 무한 루프 구현
   useEffect(() => {
@@ -393,14 +407,52 @@ const HomePage = () => {
       return itemDate >= today && itemDate <= weekFromNow
     })
 
-    // 테스트용: 일정이 없으면 모든 일정 표시
     return filtered.length > 0 ? filtered : weeklySchedule
   }
 
   const upcomingSchedule = getWeeklySchedule()
 
-  // 실제 슬라이드 인덱스 계산 (클론 제외, 인디케이터용)
   const actualSlideIndex = slideIndex <= 0 ? slideImages.length - 1 : slideIndex > slideImages.length ? 0 : slideIndex - 1
+
+  useEffect(() => {
+    if (newsItems.length <= 1) return
+
+    const newsInterval = setInterval(() => {
+      handleNewsCardNext()
+    }, 5000)
+
+    return () => clearInterval(newsInterval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newsCardIndex])
+
+  useEffect(() => {
+    if (!isNewsTransitioning) {
+      if (newsCardIndex === 0) {
+        setNewsCardIndex(newsItems.length)
+      } else if (newsCardIndex === newsItems.length + 1) {
+        setNewsCardIndex(1)
+      }
+    }
+  }, [isNewsTransitioning, newsCardIndex])
+
+  const handleNewsCardNext = () => {
+    if (newsItems.length <= 1) return
+
+    if (newsCardIndex === newsItems.length) {
+      setIsNewsTransitioning(true)
+      setNewsCardIndex(newsItems.length + 1)
+      setTimeout(() => {
+        setIsNewsTransitioning(false)
+        setNewsCardIndex(1)
+      }, 500)
+    } else {
+      setIsNewsTransitioning(true)
+      setNewsCardIndex((prev) => prev + 1)
+      setTimeout(() => {
+        setIsNewsTransitioning(false)
+      }, 500)
+    }
+  }
 
   return (
     <HomeContainer>
@@ -488,16 +540,29 @@ const HomePage = () => {
           <NewsBox>
             <BoxTitle>와이소프트 소식</BoxTitle>
             <NewsContainer>
-              <NewsList $itemCount={newsItems.length}>
-                {/* 원본 뉴스 항목들 */}
+              <NewsCardWrapper
+                $currentIndex={newsCardIndex}
+                $totalCards={newsItems.length}
+                $isTransitioning={isNewsTransitioning}
+              >
+                {/* 마지막 카드 클론 (무한 루프용) */}
+                <NewsCard $totalCards={newsItems.length}>
+                  <NewsCardTitle>{newsItems[newsItems.length - 1].title}</NewsCardTitle>
+                  <NewsCardContent>{newsItems[newsItems.length - 1].content}</NewsCardContent>
+                </NewsCard>
+                {/* 실제 카드들 */}
                 {newsItems.map((news, index) => (
-                  <NewsItem key={`original-${index}`}>{news}</NewsItem>
+                  <NewsCard key={index} $totalCards={newsItems.length}>
+                    <NewsCardTitle>{news.title}</NewsCardTitle>
+                    <NewsCardContent>{news.content}</NewsCardContent>
+                  </NewsCard>
                 ))}
-                {/* 무한 루프를 위한 복제 뉴스 항목들 */}
-                {newsItems.map((news, index) => (
-                  <NewsItem key={`clone-${index}`}>{news}</NewsItem>
-                ))}
-              </NewsList>
+                {/* 첫 번째 카드 클론 (무한 루프용) */}
+                <NewsCard $totalCards={newsItems.length}>
+                  <NewsCardTitle>{newsItems[0].title}</NewsCardTitle>
+                  <NewsCardContent>{newsItems[0].content}</NewsCardContent>
+                </NewsCard>
+              </NewsCardWrapper>
             </NewsContainer>
           </NewsBox>
         </RightColumn>

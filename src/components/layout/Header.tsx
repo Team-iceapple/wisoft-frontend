@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom'
 import styled from 'styled-components'
-import { FaHome, FaLaptop, FaFileAlt, FaTrophy, FaChalkboardTeacher } from 'react-icons/fa'
+import { FaHome, FaLaptop, FaFileAlt, FaTrophy, FaCertificate, FaChalkboardTeacher } from 'react-icons/fa'
 
 const HeaderContainer = styled.header`
     display: flex;
@@ -40,14 +40,14 @@ const NavIcon = styled(Link)`
 `
 
 const IconWrapper = styled.div`
-    font-size: 3.2rem;
+    font-size: 2.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
 `
 
 const NavText = styled.span`
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 500;
 `
 
@@ -56,6 +56,7 @@ const getTitle = (pathname: string): string => {
     if (pathname.startsWith('/project')) return 'Project'
     if (pathname.startsWith('/paper')) return 'Paper'
     if (pathname.startsWith('/awards')) return 'Awards'
+    if (pathname.startsWith('/patent')) return 'Patent'
     if (pathname.startsWith('/seminar')) return 'Seminar'
     if (pathname.startsWith('/gallery')) return 'Photo'
     return 'WiSoft'
@@ -92,6 +93,12 @@ const Header = () => {
                         <FaTrophy />
                     </IconWrapper>
                     <NavText>Awards</NavText>
+                </NavIcon>
+                <NavIcon to="/patent">
+                    <IconWrapper>
+                        <FaCertificate />
+                    </IconWrapper>
+                    <NavText>Patent</NavText>
                 </NavIcon>
                 <NavIcon to="/seminar">
                     <IconWrapper>

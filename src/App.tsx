@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'
 import ProjectPage from './pages/ProjectPage'
 import PaperPage from './pages/PaperPage'
 import AwardsPage from './pages/AwardsPage'
+import PatentPage from './pages/PatentPage'
 import SeminarPage from './pages/SeminarPage'
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
                     <Route path="project" element={<ProjectPage />} />
                     <Route path="paper" element={<PaperPage />} />
                     <Route path="awards" element={<AwardsPage />} />
+                    <Route path="patent" element={<PatentPage />} />
                     <Route path="seminar" element={<SeminarPage />} />
                 </Route>
             </Routes>

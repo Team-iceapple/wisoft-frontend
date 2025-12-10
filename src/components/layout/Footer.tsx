@@ -21,19 +21,19 @@ const ContentWrapper = styled.div`
   }
 
   .title {
-    font-size: 2rem;
+    font-size: 1.7rem;
     font-weight: bold;
     color: #000;
   }
   
   .subtitle {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #000;
   }
   
   .address, .contact {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: #555;
   }
 `

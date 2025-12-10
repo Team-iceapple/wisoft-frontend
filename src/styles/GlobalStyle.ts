@@ -8,18 +8,16 @@ export const GlobalStyle = createGlobalStyle`
     }
 
     html {
-        /* 1440x2560 해상도 기준 기본 폰트 크기 설정 */
-        font-size: 20px; /* 1440px 기준으로 적절한 크기 */
+        font-size: 20px; 
     }
 
     html, body, #root {
         width: 100%;
         height: 100%;
-        overflow: hidden; /* ★★★ 1. 브라우저 스크롤바 원천 차단 ★★★ */
+        overflow: hidden;
     }
 
     body {
-        /* ★★★ 2. 레터박스(남는 영역) 배경색 ★★★ */
         background-color: #000;
 
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
