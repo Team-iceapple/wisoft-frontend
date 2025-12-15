@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 // @ts-ignore
 import paperImage1 from '../assets/image-paper1.jpg'
 // @ts-ignore
 import paperImage2 from '../assets/image-paper2.jpg'
 
-// 연도 목록
-const years = [2025, 2024, 2023, 2022, 2021]
 
 // 슬라이드 이미지 데이터 (연도별로 다를 수 있지만, 현재는 동일한 이미지 사용)
 const paperImages = [
@@ -25,67 +23,6 @@ const PaperContainer = styled.div`
   align-items: center;
   justify-content: center;
 `
-
-const YearSelector = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0;
-  flex-shrink: 0;
-`
-
-const YearButton = styled.button`
-  font-size: 4rem;
-  font-weight: bold;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #333;
-  padding: 1rem 2rem;
-  transition: color 0.3s;
-
-  &:hover {
-    color: #007bff;
-  }
-`
-
-const YearDropdown = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: 1rem;
-  background: white;
-  border: 0.2rem solid #e0e0e0;
-  border-radius: 1rem;
-  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  display: ${(props) => (props.$isOpen ? 'flex' : 'none')};
-  flex-direction: column;
-  min-width: 15rem;
-  overflow: hidden;
-`
-
-const YearOption = styled.button`
-  font-size: 2.2rem;
-  padding: 1.2rem 2.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  color: #333;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #f0f0f0;
-  }
-
-  &:not(:last-child) {
-    border-bottom: 0.1rem solid #e0e0e0;
-  }
-`
-
 // 슬라이드 섹션
 const SlideSection = styled.section`
   position: relative;
@@ -164,28 +101,9 @@ const Indicator = styled.button<{ $active: boolean }>`
 `
 
 const PaperPage = () => {
-  const [selectedYear, setSelectedYear] = useState(2025)
-  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false)
+
   const [slideIndex, setSlideIndex] = useState(1) // 첫 번째 클론 다음부터 시작 (인덱스 1)
   const [isTransitioning, setIsTransitioning] = useState(true)
-  const yearSelectorRef = useRef<HTMLDivElement>(null)
-
-  // 외부 클릭 시 드롭다운 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (yearSelectorRef.current && !yearSelectorRef.current.contains(event.target as Node)) {
-        setIsYearDropdownOpen(false)
-      }
-    }
-
-    if (isYearDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isYearDropdownOpen])
 
   // 슬라이드가 클론 위치에 도달했을 때 실제 위치로 이동
   useEffect(() => {
@@ -249,31 +167,12 @@ const PaperPage = () => {
     }, 500)
   }
 
-  const handleYearSelect = (year: number) => {
-    setSelectedYear(year)
-    setIsYearDropdownOpen(false)
-    // 연도 변경 시 슬라이드 초기화
-    setSlideIndex(1)
-  }
-
   // 실제 슬라이드 인덱스 계산 (클론 제외, 인디케이터용)
   const actualSlideIndex = slideIndex <= 0 ? paperImages.length - 1 : slideIndex > paperImages.length ? 0 : slideIndex - 1
 
   return (
     <PaperContainer>
-      {/* 연도 선택 */}
-      <YearSelector ref={yearSelectorRef}>
-        <YearButton onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}>
-          {selectedYear}
-        </YearButton>
-        <YearDropdown $isOpen={isYearDropdownOpen}>
-          {years.map((year) => (
-            <YearOption key={year} onClick={() => handleYearSelect(year)}>
-              {year}
-            </YearOption>
-          ))}
-        </YearDropdown>
-      </YearSelector>
+
 
       {/* 슬라이드 섹션 */}
       <SlideSection>

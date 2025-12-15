@@ -225,18 +225,15 @@ const SpecialNote = styled.div`
   text-align: center;
 `
 
-const StatusBadge = styled.div<{ $status: '진행중' | '완료됨'; $hasSpecialNote: boolean }>`
-  position: absolute;
-  top: ${(props) => (props.$hasSpecialNote ? '4.5rem' : '1rem')};
-  right: 1rem;
+const StatusBadge = styled.div<{ $status: '진행중' | '완료됨' }>`
   background: ${(props) => (props.$status === '진행중' ? 'rgba(52, 152, 219, 0.9)' : 'rgba(46, 204, 113, 0.9)')};
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.6rem;
   font-size: 1.1rem;
   font-weight: bold;
-  z-index: 10;
   white-space: nowrap;
+  margin-left: 1rem;
 `
 
 const ProjectImageWrapper = styled.div`
@@ -272,10 +269,16 @@ const ProjectInfo = styled.div`
   color: white;
 `
 
+const ProjectNameContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+`
+
 const ProjectName = styled.h2`
   font-size: 2.2rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin: 0;
 `
 
 const Participants = styled.div`
@@ -457,13 +460,15 @@ const ProjectPage = () => {
         {displayedProjects.map((project, index) => (
           <ProjectCard key={startIndex + index}>
             {project.specialNote && <SpecialNote>{project.specialNote}</SpecialNote>}
-            <StatusBadge $status={project.status} $hasSpecialNote={!!project.specialNote}>
-              {project.status}
-            </StatusBadge>
             <ProjectImageWrapper onClick={() => handleProjectClick(project)}>
               <ProjectImage src={project.image} alt={project.projectName} />
               <ProjectInfo>
-                <ProjectName>{project.projectName}</ProjectName>
+                <ProjectNameContainer>
+                  <ProjectName>{project.projectName}</ProjectName>
+                  <StatusBadge $status={project.status}>
+                    {project.status}
+                  </StatusBadge>
+                </ProjectNameContainer>
                 <Participants>{project.participants.join(' ')}</Participants>
               </ProjectInfo>
             </ProjectImageWrapper>

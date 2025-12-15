@@ -30,7 +30,7 @@ interface NewsItem {
 }
 
 const newsItems: NewsItem[] = [
-  { title: '논문 등록 축하', content: '최근 정보통신기술 어쩌구.. (2025) (이은채, 이혜현, 김나연, 정예환) 논문 등록을 축하합니다 🎉' },
+  { title: '논문 등록 축하', content: '논문제목어쩌구 (2025) (이은채, 이혜현, 김나연, 정예환) 논문 등록을 축하합니다 🎉' },
   { title: '생일 축하', content: '대학원생 문동민 생일 축하했습니다 🎂' },
   { title: '새 프로젝트', content: '새로운 프로젝트 시작!' },
   { title: '졸업 축하', content: '모바일융합공학과 1기 졸업 축하할 예정입니다' },
@@ -232,13 +232,15 @@ const ProjectBox = styled.div`
 `
 
 const NewsBox = styled.div`
-  flex: 1;
+  flex: 0.6;
   padding: 2rem;
   background: #f8f9fa;
   border-radius: 2rem;
   position: relative;
   overflow: hidden;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 `
 
 const BoxTitle = styled.h3`
@@ -261,14 +263,17 @@ const ProjectList = styled.ul`
 
 const ProjectItem = styled.li`
   font-size: 1.6rem;
-  padding-left: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 1rem;
   position: relative;
   color: #333;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.1);
 
   &::before {
     content: '•';
     position: absolute;
-    left: 0;
+    left: 1.5rem;
     color: #007bff;
     font-size: 2.2rem;
   }
@@ -276,7 +281,6 @@ const ProjectItem = styled.li`
 
 const NewsContainer = styled.div`
   position: relative;
-  height: 100%;
   width: 100%;
   overflow: hidden;
   flex: 1;
@@ -291,21 +295,21 @@ const NewsCardWrapper = styled.div<{ $currentIndex: number; $totalCards: number;
   height: ${(props) => (props.$totalCards + 2) * 100}%;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  transform: translateY(${(props) => -(props.$currentIndex) * (100 / (props.$totalCards + 2))}%);
+  gap: 0;
+  transform: translateY(${(props) => -(props.$currentIndex) * 100}%);
   transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
 `
 
 const NewsCard = styled.div<{ $totalCards: number }>`
   width: 100%;
-  height: ${(props) => 100 / (props.$totalCards + 2)}%;
+  height: 100%;
   flex-shrink: 0;
   padding: 2rem;
   background: white;
   border-radius: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
   box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
 `
@@ -314,6 +318,7 @@ const NewsCardTitle = styled.div`
   font-size: 1.6rem;
   font-weight: bold;
   color: #333;
+  margin-top: 0;
 `
 
 const NewsCardContent = styled.div`
@@ -321,6 +326,11 @@ const NewsCardContent = styled.div`
   color: #666;
   line-height: 1.5;
   flex: 1;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
 `
 
 const HomePage = () => {
@@ -454,6 +464,11 @@ const HomePage = () => {
     }
   }
 
+  const truncateContent = (content: string, maxLength: number = 45) => {
+    if (content.length <= maxLength) return content
+    return content.slice(0, maxLength) + '...'
+  }
+
   return (
     <HomeContainer>
       {/* 슬라이드 섹션 */}
@@ -548,19 +563,19 @@ const HomePage = () => {
                 {/* 마지막 카드 클론 (무한 루프용) */}
                 <NewsCard $totalCards={newsItems.length}>
                   <NewsCardTitle>{newsItems[newsItems.length - 1].title}</NewsCardTitle>
-                  <NewsCardContent>{newsItems[newsItems.length - 1].content}</NewsCardContent>
+                  <NewsCardContent>{truncateContent(newsItems[newsItems.length - 1].content)}</NewsCardContent>
                 </NewsCard>
                 {/* 실제 카드들 */}
                 {newsItems.map((news, index) => (
                   <NewsCard key={index} $totalCards={newsItems.length}>
                     <NewsCardTitle>{news.title}</NewsCardTitle>
-                    <NewsCardContent>{news.content}</NewsCardContent>
+                    <NewsCardContent>{truncateContent(news.content)}</NewsCardContent>
                   </NewsCard>
                 ))}
                 {/* 첫 번째 카드 클론 (무한 루프용) */}
                 <NewsCard $totalCards={newsItems.length}>
                   <NewsCardTitle>{newsItems[0].title}</NewsCardTitle>
-                  <NewsCardContent>{newsItems[0].content}</NewsCardContent>
+                  <NewsCardContent>{truncateContent(newsItems[0].content)}</NewsCardContent>
                 </NewsCard>
               </NewsCardWrapper>
             </NewsContainer>
