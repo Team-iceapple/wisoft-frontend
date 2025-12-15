@@ -15,8 +15,8 @@ const Container = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 2rem 3rem;
-  gap: 1rem;
+  padding: 2rem 4rem;
+  gap: 1.5rem;
   overflow: hidden;
 `
 
@@ -37,12 +37,12 @@ const ErrorText = styled.p`
 const GridContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+  gap: 3rem;
   width: 100%;
   flex: 1;
-  padding: 0.5rem 0;
+  padding: 1rem 0;
   min-height: 0;
-  max-width: 95%;
+  max-width: 90%;
   margin: 0 auto;
 `
 
