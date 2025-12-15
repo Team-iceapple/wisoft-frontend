@@ -1,13 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 // @ts-ignore
 import paperImage1 from '../assets/image-paper1.jpg'
 // @ts-ignore
 import paperImage2 from '../assets/image-paper2.jpg'
 
+// API 응답 타입 정의
+interface Paper {
+  id: number
+  year: number
+  image_url: string
+  image_type: string
+}
 
-// 슬라이드 이미지 데이터 (연도별로 다를 수 있지만, 현재는 동일한 이미지 사용)
-const paperImages = [
+interface PapersApiResponse {
+  papers: Paper[]
+}
+
+// 기본 이미지 배열 (API 데이터가 없을 경우 사용)
+const defaultPaperImages = [
   paperImage1,
   paperImage2,
 ]
@@ -43,8 +54,8 @@ const SlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: number; $
   transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
 `
 
-const SlideImage = styled.img`
-  width: ${100 / (paperImages.length + 2)}%;
+const SlideImage = styled.img<{ $totalSlides: number }>`
+  width: ${(props) => 100 / (props.$totalSlides + 2)}%;
   height: 100%;
   object-fit: cover;
   flex-shrink: 0;
@@ -101,9 +112,42 @@ const Indicator = styled.button<{ $active: boolean }>`
 `
 
 const PaperPage = () => {
-
+  const [paperImages, setPaperImages] = useState<string[]>(defaultPaperImages)
   const [slideIndex, setSlideIndex] = useState(1) // 첫 번째 클론 다음부터 시작 (인덱스 1)
   const [isTransitioning, setIsTransitioning] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // API에서 논문 데이터 가져오기
+  useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+        const response = await fetch(`${apiBaseUrl}/papers`)
+
+        if (!response.ok) {
+          throw new Error('논문 데이터를 불러오는 데 실패했습니다.')
+        }
+
+        const data: PapersApiResponse = await response.json()
+
+        // image_url 배열로 변환
+        if (data.papers && data.papers.length > 0) {
+          const imageUrls = data.papers.map((paper) => paper.image_url)
+          setPaperImages(imageUrls)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.')
+        console.error('논문 데이터 로딩 오류:', err)
+        // 에러 발생 시 기본 이미지 사용
+        setPaperImages(defaultPaperImages)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPapers()
+  }, [])
 
   // 슬라이드가 클론 위치에 도달했을 때 실제 위치로 이동
   useEffect(() => {
@@ -117,9 +161,9 @@ const PaperPage = () => {
         setSlideIndex(1)
       }
     }
-  }, [isTransitioning, slideIndex])
+  }, [isTransitioning, slideIndex, paperImages.length])
 
-  const handleSlidePrev = () => {
+  const handleSlidePrev = useCallback(() => {
     if (paperImages.length <= 1) return
 
     if (slideIndex === 1) {
@@ -137,9 +181,9 @@ const PaperPage = () => {
         setIsTransitioning(false)
       }, 500)
     }
-  }
+  }, [slideIndex, paperImages.length])
 
-  const handleSlideNext = () => {
+  const handleSlideNext = useCallback(() => {
     if (paperImages.length <= 1) return
 
     if (slideIndex === paperImages.length) {
@@ -157,7 +201,18 @@ const PaperPage = () => {
         setIsTransitioning(false)
       }, 500)
     }
-  }
+  }, [slideIndex, paperImages.length])
+
+  // 슬라이드 자동 재생
+  useEffect(() => {
+    if (paperImages.length <= 1) return
+
+    const slideInterval = setInterval(() => {
+      handleSlideNext()
+    }, 5000)
+
+    return () => clearInterval(slideInterval)
+  }, [paperImages.length, handleSlideNext])
 
   const handleIndicatorClick = (index: number) => {
     setIsTransitioning(true)
@@ -169,6 +224,26 @@ const PaperPage = () => {
 
   // 실제 슬라이드 인덱스 계산 (클론 제외, 인디케이터용)
   const actualSlideIndex = slideIndex <= 0 ? paperImages.length - 1 : slideIndex > paperImages.length ? 0 : slideIndex - 1
+
+  if (loading) {
+    return (
+      <PaperContainer>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', fontSize: '2rem' }}>
+          로딩 중...
+        </div>
+      </PaperContainer>
+    )
+  }
+
+  if (error && paperImages.length === 0) {
+    return (
+      <PaperContainer>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', fontSize: '2rem', color: '#dc3545' }}>
+          {error}
+        </div>
+      </PaperContainer>
+    )
+  }
 
   return (
     <PaperContainer>
@@ -182,13 +257,51 @@ const PaperPage = () => {
           $isTransitioning={isTransitioning}
         >
           {/* 마지막 이미지 클론 (무한 루프용) */}
-          <SlideImage src={paperImages[paperImages.length - 1]} alt="Paper slide clone last" />
-          {/* 실제 이미지들 */}
-          {paperImages.map((image, index) => (
-            <SlideImage key={index} src={image} alt={`Paper slide ${index + 1}`} />
-          ))}
-          {/* 첫 번째 이미지 클론 (무한 루프용) */}
-          <SlideImage src={paperImages[0]} alt="Paper slide clone first" />
+          {paperImages.length > 0 && (
+            <>
+              <SlideImage 
+                $totalSlides={paperImages.length} 
+                src={paperImages[paperImages.length - 1]} 
+                alt="Paper slide clone last"
+                onError={(e) => {
+                  // 이미지 로드 실패 시 기본 이미지 사용
+                  const target = e.target as HTMLImageElement
+                  if (target.src !== paperImage1) {
+                    target.src = paperImage1
+                  }
+                }}
+              />
+              {/* 실제 이미지들 */}
+              {paperImages.map((image, index) => (
+                <SlideImage 
+                  key={index} 
+                  $totalSlides={paperImages.length} 
+                  src={image} 
+                  alt={`Paper slide ${index + 1}`}
+                  onError={(e) => {
+                    // 이미지 로드 실패 시 기본 이미지 사용
+                    const target = e.target as HTMLImageElement
+                    if (target.src !== paperImage1) {
+                      target.src = paperImage1
+                    }
+                  }}
+                />
+              ))}
+              {/* 첫 번째 이미지 클론 (무한 루프용) */}
+              <SlideImage 
+                $totalSlides={paperImages.length} 
+                src={paperImages[0]} 
+                alt="Paper slide clone first"
+                onError={(e) => {
+                  // 이미지 로드 실패 시 기본 이미지 사용
+                  const target = e.target as HTMLImageElement
+                  if (target.src !== paperImage1) {
+                    target.src = paperImage1
+                  }
+                }}
+              />
+            </>
+          )}
         </SlideWrapper>
         {paperImages.length > 1 && (
           <>

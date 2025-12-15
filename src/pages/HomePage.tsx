@@ -1,43 +1,58 @@
-import { useState, useEffect } from 'react'
-import styled, { keyframes } from 'styled-components'
+import { useState, useEffect, useCallback } from 'react'
+import styled from 'styled-components'
 // @ts-ignore
 import slideImage1 from '../assets/image-slide1.jpg'
 // @ts-ignore
 import slideImage2 from '../assets/image-slide2.jpg'
 
-// 슬라이드 이미지 데이터
-const slideImages = [
-  slideImage1,
-  slideImage2,
-]
+// API 응답 타입 정의
+interface CalendarEvent {
+  id: number
+  title: string
+}
 
-// 일주일 일정 데이터 (예시 - 실제 데이터로 교체 필요)
-const weeklySchedule = [
-  { date: '25/01/15(금)', title: '프로젝트 발표회' },
-  { date: '25/01/17(일)', title: '연구실 회의' },
-]
+interface Calendar {
+  range_start: string
+  range_end: string
+  events: CalendarEvent[]
+}
 
-// 프로젝트 데이터 (예시 - 실제 데이터로 교체 필요)
-const currentProjects = [
-  '연구실 전용 키오스크 (4학년)',
-  '비밀리에 진행되는 시크릿 프로젝트 (3학년)',
-]
+interface Lab {
+  title: string
+  description: string
+  image_urls: string[]
+}
 
-// 뉴스 데이터 (예시 - 실제 데이터로 교체 필요)
+interface Project {
+  id: number
+  title: string
+  grade: number
+}
+
+interface News {
+  id: number
+  title: string
+  detail: string
+}
+
+interface HomeApiResponse {
+  lab: Lab
+  calendar: Calendar
+  projects: Project[]
+  news: News[]
+}
+
+// 뉴스 아이템 인터페이스 (UI용)
 interface NewsItem {
   title: string
   content: string
 }
 
-const newsItems: NewsItem[] = [
-  { title: '논문 등록 축하', content: '논문제목어쩌구 (2025) (이은채, 이혜현, 김나연, 정예환) 논문 등록을 축하합니다 🎉' },
-  { title: '생일 축하', content: '대학원생 문동민 생일 축하했습니다 🎂' },
-  { title: '새 프로젝트', content: '새로운 프로젝트 시작!' },
-  { title: '졸업 축하', content: '모바일융합공학과 1기 졸업 축하할 예정입니다' },
-  { title: '세미나 완료', content: 'Test 세미나 드디어 끝난 거 축하합니다' },
-  { title: '수상 소식', content: '김바나나 상 받았다' },
-  { title: '수상 소식', content: '모바비 상 받았다' },
-]
+// 일정 아이템 인터페이스 (UI용)
+interface ScheduleItem {
+  date: string
+  title: string
+}
 
 // 스타일 컴포넌트
 const HomeContainer = styled.div`
@@ -68,8 +83,8 @@ const SlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: number; $
   transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
 `
 
-const SlideImage = styled.img`
-  width: ${100 / (slideImages.length + 2)}%;
+const SlideImage = styled.img<{ $totalSlides: number }>`
+  width: ${(props) => 100 / (props.$totalSlides + 2)}%;
   height: 100%;
   object-fit: cover;
   object-position: center;
@@ -338,33 +353,74 @@ const HomePage = () => {
   const [isTransitioning, setIsTransitioning] = useState(true)
   const [newsCardIndex, setNewsCardIndex] = useState(1) // 뉴스 카드 인덱스
   const [isNewsTransitioning, setIsNewsTransitioning] = useState(true)
+  
+  // API 데이터 상태
+  const [labData, setLabData] = useState<Lab | null>(null)
+  const [slideImages, setSlideImages] = useState<string[]>([slideImage1, slideImage2]) // 기본값으로 로컬 이미지 사용
+  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // 슬라이드 무한 루프 구현
+  // API 데이터 가져오기
   useEffect(() => {
-    if (slideImages.length <= 1) return
+    const fetchHomeData = async () => {
+      try {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+        const response = await fetch(`${apiBaseUrl}/home`)
 
-    const slideInterval = setInterval(() => {
-      handleSlideNext()
-    }, 5000)
+        if (!response.ok) {
+          throw new Error('홈 데이터를 불러오는 데 실패했습니다.')
+        }
 
-    return () => clearInterval(slideInterval)
-  }, [])
+        const data: HomeApiResponse = await response.json()
 
-  // 슬라이드가 클론 위치에 도달했을 때 실제 위치로 이동
-  useEffect(() => {
-    if (!isTransitioning) {
-      // transition이 끝난 후 클론 위치에 있으면 실제 위치로 즉시 이동
-      if (slideIndex === 0) {
-        // 첫 번째 클론에 도달하면 마지막 실제 이미지로 이동
-        setSlideIndex(slideImages.length)
-      } else if (slideIndex === slideImages.length + 1) {
-        // 마지막 클론에 도달하면 첫 번째 실제 이미지로 이동
-        setSlideIndex(1)
+        // Lab 데이터 설정
+        setLabData(data.lab)
+        if (data.lab.image_urls && data.lab.image_urls.length > 0) {
+          setSlideImages(data.lab.image_urls)
+        }
+
+        // Calendar 데이터 변환 및 설정
+        const formattedSchedule: ScheduleItem[] = data.calendar.events.map((event) => {
+          // range_start를 기준으로 날짜 포맷팅 (ISO 8601 -> YY/MM/DD(요일) 형식)
+          const eventDate = new Date(data.calendar.range_start)
+          const year = eventDate.getFullYear().toString().slice(-2)
+          const month = String(eventDate.getMonth() + 1).padStart(2, '0')
+          const day = String(eventDate.getDate()).padStart(2, '0')
+          const weekdays = ['일', '월', '화', '수', '목', '금', '토']
+          const weekday = weekdays[eventDate.getDay()]
+          const formattedDate = `${year}/${month}/${day}(${weekday})`
+          
+          return {
+            date: formattedDate,
+            title: event.title,
+          }
+        })
+        setScheduleItems(formattedSchedule)
+
+        // Projects 데이터 설정
+        setProjects(data.projects)
+
+        // News 데이터 변환 및 설정
+        const formattedNews: NewsItem[] = data.news.map((item) => ({
+          title: item.title,
+          content: item.detail,
+        }))
+        setNewsItems(formattedNews)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.')
+        console.error('홈 데이터 로딩 오류:', err)
+      } finally {
+        setLoading(false)
       }
     }
-  }, [isTransitioning, slideIndex])
 
-  const handleSlidePrev = () => {
+    fetchHomeData()
+  }, [])
+
+  const handleSlidePrev = useCallback(() => {
     if (slideIndex === 1) {
       // 첫 번째 실제 이미지에서 마지막 클론으로 이동
       setIsTransitioning(true)
@@ -380,9 +436,9 @@ const HomePage = () => {
         setIsTransitioning(false)
       }, 500)
     }
-  }
+  }, [slideIndex, slideImages.length])
 
-  const handleSlideNext = () => {
+  const handleSlideNext = useCallback(() => {
     if (slideIndex === slideImages.length) {
       // 마지막 실제 이미지에서 첫 번째 클론으로 이동
       setIsTransitioning(true)
@@ -398,7 +454,32 @@ const HomePage = () => {
         setIsTransitioning(false)
       }, 500)
     }
-  }
+  }, [slideIndex, slideImages.length])
+
+  // 슬라이드 무한 루프 구현
+  useEffect(() => {
+    if (slideImages.length <= 1) return
+
+    const slideInterval = setInterval(() => {
+      handleSlideNext()
+    }, 5000)
+
+    return () => clearInterval(slideInterval)
+  }, [slideImages.length, handleSlideNext])
+
+  // 슬라이드가 클론 위치에 도달했을 때 실제 위치로 이동
+  useEffect(() => {
+    if (!isTransitioning) {
+      // transition이 끝난 후 클론 위치에 있으면 실제 위치로 즉시 이동
+      if (slideIndex === 0) {
+        // 첫 번째 클론에 도달하면 마지막 실제 이미지로 이동
+        setSlideIndex(slideImages.length)
+      } else if (slideIndex === slideImages.length + 1) {
+        // 마지막 클론에 도달하면 첫 번째 실제 이미지로 이동
+        setSlideIndex(1)
+      }
+    }
+  }, [isTransitioning, slideIndex, slideImages.length])
 
   const handleIndicatorClick = (index: number) => {
     setIsTransitioning(true)
@@ -407,17 +488,28 @@ const HomePage = () => {
 
   // 일주일 일정 필터링 - 현재 날짜 기준
   const getWeeklySchedule = () => {
+    if (scheduleItems.length === 0) return []
+    
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
 
-    const filtered = weeklySchedule.filter((item) => {
-      const itemDate = new Date(item.date)
+    const filtered = scheduleItems.filter((item) => {
+      // 날짜 문자열 파싱 (YY/MM/DD 형식)
+      const dateMatch = item.date.match(/(\d{2})\/(\d{2})\/(\d{2})/)
+      if (!dateMatch) return false
+      
+      const [, yearStr, monthStr, dayStr] = dateMatch
+      const year = 2000 + parseInt(yearStr, 10)
+      const month = parseInt(monthStr, 10) - 1
+      const day = parseInt(dayStr, 10)
+      
+      const itemDate = new Date(year, month, day)
       itemDate.setHours(0, 0, 0, 0)
       return itemDate >= today && itemDate <= weekFromNow
     })
 
-    return filtered.length > 0 ? filtered : weeklySchedule
+    return filtered.length > 0 ? filtered : scheduleItems
   }
 
   const upcomingSchedule = getWeeklySchedule()
@@ -469,6 +561,31 @@ const HomePage = () => {
     return content.slice(0, maxLength) + '...'
   }
 
+  // 프로젝트 포맷팅 함수
+  const formatProject = (project: Project) => {
+    return `${project.title} (${project.grade}학년)`
+  }
+
+  if (loading) {
+    return (
+      <HomeContainer>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', fontSize: '2rem' }}>
+          로딩 중...
+        </div>
+      </HomeContainer>
+    )
+  }
+
+  if (error) {
+    return (
+      <HomeContainer>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', fontSize: '2rem', color: '#dc3545' }}>
+          {error}
+        </div>
+      </HomeContainer>
+    )
+  }
+
   return (
     <HomeContainer>
       {/* 슬라이드 섹션 */}
@@ -479,13 +596,17 @@ const HomePage = () => {
           $isTransitioning={isTransitioning}
         >
           {/* 마지막 이미지 클론 (무한 루프용) */}
-          <SlideImage src={slideImages[slideImages.length - 1]} alt="Slide clone last" />
-          {/* 실제 이미지들 */}
-          {slideImages.map((image, index) => (
-            <SlideImage key={index} src={image} alt={`Slide ${index + 1}`} />
-          ))}
-          {/* 첫 번째 이미지 클론 (무한 루프용) */}
-          <SlideImage src={slideImages[0]} alt="Slide clone first" />
+          {slideImages.length > 0 && (
+            <>
+              <SlideImage $totalSlides={slideImages.length} src={slideImages[slideImages.length - 1]} alt="Slide clone last" />
+              {/* 실제 이미지들 */}
+              {slideImages.map((image, index) => (
+                <SlideImage key={index} $totalSlides={slideImages.length} src={image} alt={`Slide ${index + 1}`} />
+              ))}
+              {/* 첫 번째 이미지 클론 (무한 루프용) */}
+              <SlideImage $totalSlides={slideImages.length} src={slideImages[0]} alt="Slide clone first" />
+            </>
+          )}
         </SlideWrapper>
         {slideImages.length > 1 && (
           <>
@@ -510,12 +631,9 @@ const HomePage = () => {
 
       {/* 소개 섹션 */}
       <IntroSection>
-        <IntroTitle>문구 추천 받음..</IntroTitle>
+        <IntroTitle>{labData?.title || '와이소프트'}</IntroTitle>
         <IntroText>
-          국립한밭대학교 와이소프트(WiSoft)는 프로그래밍으로 미래를 설계하는 소프트웨어 중심의 연구실입니다.
-          <br />
-          <br />
-          다양한 프로젝트 경험을 통해 실무 역량을 갖추고 미래 기술을 선도하는 SW 핵심 인재 양성을 목표로 합니다.
+          {labData?.description || '국립한밭대학교 와이소프트(WiSoft)는 프로그래밍으로 미래를 설계하는 소프트웨어 중심의 연구실입니다.'}
         </IntroText>
         <GradientCircle />
       </IntroSection>
@@ -546,9 +664,13 @@ const HomePage = () => {
           <ProjectBox>
             <BoxTitle className="project-title">진행중인 프로젝트</BoxTitle>
             <ProjectList>
-              {currentProjects.map((project, index) => (
-                <ProjectItem key={index}>{project}</ProjectItem>
-              ))}
+              {projects.length > 0 ? (
+                projects.map((project) => (
+                  <ProjectItem key={project.id}>{formatProject(project)}</ProjectItem>
+                ))
+              ) : (
+                <ProjectItem>진행 중인 프로젝트가 없습니다</ProjectItem>
+              )}
             </ProjectList>
           </ProjectBox>
 
