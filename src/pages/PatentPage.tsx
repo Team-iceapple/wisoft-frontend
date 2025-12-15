@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
-// @ts-ignore
-import paperImage1 from '../assets/image-paper1.jpg'
-// @ts-ignore
-import paperImage2 from '../assets/image-paper2.jpg'
 
 // API 응답 타입 정의 (PaperPage와 동일)
 interface Patent {
@@ -16,12 +12,6 @@ interface Patent {
 interface PatentsApiResponse {
   papers: Patent[]
 }
-
-// 기본 이미지 배열 (API 데이터가 없을 경우 사용)
-const defaultPatentImages = [
-  paperImage1,
-  paperImage2,
-]
 
 const PatentContainer = styled.div`
   display: flex;
@@ -113,7 +103,7 @@ const Indicator = styled.button<{ $active: boolean }>`
 `
 
 const PatentPage = () => {
-  const [patentImages, setPatentImages] = useState<string[]>(defaultPatentImages)
+  const [patentImages, setPatentImages] = useState<string[]>([])
   const [slideIndex, setSlideIndex] = useState(1) // 첫 번째 클론 다음부터 시작 (인덱스 1)
   const [isTransitioning, setIsTransitioning] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -140,8 +130,7 @@ const PatentPage = () => {
       } catch (err) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.')
         console.error('특허 데이터 로딩 오류:', err)
-        // 에러 발생 시 기본 이미지 사용
-        setPatentImages(defaultPatentImages)
+        // 에러 발생 시 빈 배열 유지
       } finally {
         setLoading(false)
       }
@@ -274,13 +263,6 @@ const PatentPage = () => {
                 $totalSlides={patentImages.length} 
                 src={patentImages[patentImages.length - 1]} 
                 alt="Patent slide clone last"
-                onError={(e) => {
-                  // 이미지 로드 실패 시 기본 이미지 사용
-                  const target = e.target as HTMLImageElement
-                  if (target.src !== paperImage1) {
-                    target.src = paperImage1
-                  }
-                }}
               />
               {/* 실제 이미지들 */}
               {patentImages.map((image, index) => (
@@ -289,13 +271,6 @@ const PatentPage = () => {
                   $totalSlides={patentImages.length} 
                   src={image} 
                   alt={`Patent slide ${index + 1}`}
-                  onError={(e) => {
-                    // 이미지 로드 실패 시 기본 이미지 사용
-                    const target = e.target as HTMLImageElement
-                    if (target.src !== paperImage1) {
-                      target.src = paperImage1
-                    }
-                  }}
                 />
               ))}
               {/* 첫 번째 이미지 클론 (무한 루프용) */}
@@ -303,13 +278,6 @@ const PatentPage = () => {
                 $totalSlides={patentImages.length} 
                 src={patentImages[0]} 
                 alt="Patent slide clone first"
-                onError={(e) => {
-                  // 이미지 로드 실패 시 기본 이미지 사용
-                  const target = e.target as HTMLImageElement
-                  if (target.src !== paperImage1) {
-                    target.src = paperImage1
-                  }
-                }}
               />
             </>
           )}

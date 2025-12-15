@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
-// @ts-ignore
-import awardImage1 from '../assets/image-awards1.jpg'
-// @ts-ignore
-import awardImage2 from '../assets/image-awards2.jpg'
-// @ts-ignore
-import awardImage3 from '../assets/image-awards3.jpg'
-// @ts-ignore
-import awardImage4 from '../assets/image-awards4.jpg'
-// @ts-ignore
-import awardImage5 from '../assets/image-awards5.jpg'
 
 // API 응답 타입 정의
 interface Award {
@@ -23,22 +13,6 @@ interface Award {
 interface AwardsApiResponse {
   awards: Award[]
 }
-
-// 기본 이미지 배열 (API 데이터가 없을 경우 사용)
-const defaultAwardImages = [
-  awardImage1,
-  awardImage2,
-  awardImage3,
-  awardImage4,
-  awardImage5,
-  awardImage1,
-  awardImage2,
-  awardImage3,
-  awardImage4,
-  awardImage5,
-  awardImage1,
-  awardImage2,
-]
 
 // 각 줄당 상장 개수
 const ITEMS_PER_ROW = 4
@@ -101,7 +75,7 @@ const AwardImage = styled.img`
 `
 
 const AwardsPage = () => {
-  const [awardImages, setAwardImages] = useState<string[]>(defaultAwardImages)
+  const [awardImages, setAwardImages] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -126,8 +100,7 @@ const AwardsPage = () => {
       } catch (err) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.')
         console.error('수상 데이터 로딩 오류:', err)
-        // 에러 발생 시 기본 이미지 사용
-        setAwardImages(defaultAwardImages)
+        // 에러 발생 시 빈 배열 유지
       } finally {
         setLoading(false)
       }
@@ -184,13 +157,6 @@ const AwardsPage = () => {
                   <AwardImage
                     src={image}
                     alt={`Award row ${rowIndex + 1} item ${index + 1}`}
-                    onError={(e) => {
-                      // 이미지 로드 실패 시 기본 이미지 사용
-                      const target = e.target as HTMLImageElement
-                      if (target.src !== awardImage1) {
-                        target.src = awardImage1
-                      }
-                    }}
                   />
                 </AwardItem>
               ))}
@@ -201,13 +167,6 @@ const AwardsPage = () => {
                   <AwardImage
                     src={image}
                     alt={`Award row ${rowIndex + 1} clone ${index + 1}`}
-                    onError={(e) => {
-                      // 이미지 로드 실패 시 기본 이미지 사용
-                      const target = e.target as HTMLImageElement
-                      if (target.src !== awardImage1) {
-                        target.src = awardImage1
-                      }
-                    }}
                   />
                 </AwardItem>
               ))}

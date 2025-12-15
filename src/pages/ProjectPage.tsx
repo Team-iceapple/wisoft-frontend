@@ -3,10 +3,6 @@ import styled, { keyframes } from 'styled-components'
 import { QRCodeSVG } from 'qrcode.react'
 
 const ITEMS_PER_PAGE = 6
-// @ts-ignore
-import projectImage1 from '../assets/image-project1.jpg'
-// @ts-ignore
-import projectImage2 from '../assets/image-project2.jpg'
 
 // API 응답 타입 정의
 interface Member {
@@ -53,94 +49,6 @@ interface UIProject {
   status: '진행중' | '완료됨'
 }
 
-// 연도별 프로젝트 데이터 (기본값)
-const defaultProjectsByYear: Record<number, UIProject[]> = {
-  2025: [
-    {
-      image: projectImage1,
-      specialNote: '포브스 선정 가장 영향력있는 프로젝트',
-      projectName: 'Iceapple',
-      participants: ['유재영', '문동민', '김나연', '신보연', '이선혜', '이은채', '이혜현', '임예은', '정예환'],
-      qrLink: 'https://iceapple.wisoft.io',
-      status: '진행중',
-    },
-    {
-      image: projectImage2,
-      projectName: '학슐랭',
-      participants: ['김나연', '이은채', '이혜현', '정예환'],
-      qrLink: 'https://hakchulraeng.wisoft.io',
-      status: '진행중',
-    },
-    {
-      image: projectImage1,
-      specialNote: '신규 프로젝트',
-      projectName: '프로젝트 알파',
-      participants: ['김철수', '이영희', '박민수', '최지영'],
-      qrLink: 'https://project-alpha.wisoft.io',
-      status: '진행중',
-    },
-    {
-      image: projectImage2,
-      projectName: '프로젝트 베타',
-      participants: ['정수진', '강동욱', '윤서연'],
-      qrLink: 'https://project-beta.wisoft.io',
-      status: '완료됨',
-    },
-    {
-      image: projectImage1,
-      projectName: '프로젝트 감마',
-      participants: ['조현우', '임도현', '한소희', '오준혁', '배수진'],
-      qrLink: 'https://project-gamma.wisoft.io',
-      status: '완료됨',
-    },
-    {
-      image: projectImage2,
-      specialNote: '하반기 프로젝트',
-      projectName: '프로젝트 델타',
-      participants: ['송민준', '김하늘', '이준호'],
-      qrLink: 'https://project-delta.wisoft.io',
-      status: '진행중',
-    },
-    {
-      image: projectImage1,
-      projectName: '프로젝트 엡실론',
-      participants: ['장예린', '홍길동', '김미영', '이태호', '박지훈', '최유진'],
-      qrLink: 'https://project-epsilon.wisoft.io',
-      status: '완료됨',
-    },
-  ],
-  2024: [
-    {
-      image: projectImage1,
-      specialNote: '우수 프로젝트',
-      projectName: '프로젝트 A',
-      participants: ['참여자1', '참여자2', '참여자3'],
-      qrLink: 'https://project-a.wisoft.io',
-      status: '완료됨',
-    },
-    {
-      image: projectImage2,
-      projectName: '프로젝트 B',
-      participants: ['참여자4', '참여자5'],
-      qrLink: 'https://project-b.wisoft.io',
-      status: '완료됨',
-    },
-  ],
-  2023: [
-    {
-      image: projectImage1,
-      projectName: '프로젝트 C',
-      participants: ['참여자6', '참여자7'],
-      qrLink: 'https://project-c.wisoft.io',
-      status: '완료됨',
-    },
-  ],
-}
-
-// 기본 연도 목록
-const defaultAvailableYears = Object.keys(defaultProjectsByYear)
-  .map(Number)
-  .sort((a, b) => b - a) // 최신 연도부터 정렬
 
 const fadeIn = keyframes`
   from {
@@ -436,9 +344,9 @@ const PaginationIndicator = styled.button<{ $active: boolean }>`
 `
 
 const ProjectPage = () => {
-  const [projectsByYear, setProjectsByYear] = useState<Record<number, UIProject[]>>(defaultProjectsByYear)
-  const [availableYears, setAvailableYears] = useState<number[]>(defaultAvailableYears)
-  const [selectedYear, setSelectedYear] = useState(defaultAvailableYears[0] || new Date().getFullYear())
+  const [projectsByYear, setProjectsByYear] = useState<Record<number, UIProject[]>>({})
+  const [availableYears, setAvailableYears] = useState<number[]>([])
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
   const [selectedProject, setSelectedProject] = useState<{
@@ -479,7 +387,7 @@ const ProjectPage = () => {
 
           groupedByYear[project.year].push({
             id: project.id,
-            image: project.thumbnail || projectImage1,
+            image: project.thumbnail,
             projectName: project.name,
             participants,
             qrLink: undefined, // 상세 정보에서 가져올 예정
@@ -493,7 +401,7 @@ const ProjectPage = () => {
           .sort((a, b) => b - a)
 
         setProjectsByYear(groupedByYear)
-        setAvailableYears(years.length > 0 ? years : defaultAvailableYears)
+        setAvailableYears(years)
         if (years.length > 0) {
           setSelectedYear(years[0])
         }
@@ -624,15 +532,8 @@ const ProjectPage = () => {
               {project.specialNote && <SpecialNote>{project.specialNote}</SpecialNote>}
               <ProjectImageWrapper onClick={() => handleProjectClick(project)}>
                 <ProjectImage 
-                  src={project.image || projectImage1} 
+                  src={project.image} 
                   alt={project.projectName}
-                  onError={(e) => {
-                    // 이미지 로드 실패 시 기본 이미지 사용
-                    const target = e.target as HTMLImageElement
-                    if (target.src !== projectImage1) {
-                      target.src = projectImage1
-                    }
-                  }}
                 />
                 <ProjectInfo>
                   <ProjectNameContainer>

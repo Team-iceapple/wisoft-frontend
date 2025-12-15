@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
-// @ts-ignore
-import slideImage1 from '../assets/image-slide1.jpg'
-// @ts-ignore
-import slideImage2 from '../assets/image-slide2.jpg'
 
 // API 응답 타입 정의
 interface CalendarEvent {
@@ -356,7 +352,7 @@ const HomePage = () => {
   
   // API 데이터 상태
   const [labData, setLabData] = useState<Lab | null>(null)
-  const [slideImages, setSlideImages] = useState<string[]>([slideImage1, slideImage2]) // 기본값으로 로컬 이미지 사용
+  const [slideImages, setSlideImages] = useState<string[]>([])
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [newsItems, setNewsItems] = useState<NewsItem[]>([])
