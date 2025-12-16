@@ -162,7 +162,7 @@ const SeminarPage = () => {
   useEffect(() => {
     const fetchSeminars = async () => {
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+        const apiBaseUrl = import.meta.env.VITE_HOME_API_BASE_URL
         const response = await fetch(`${apiBaseUrl}/notion/seminars`)
 
         if (!response.ok) {
