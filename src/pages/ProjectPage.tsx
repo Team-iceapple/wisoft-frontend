@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { QRCodeSVG } from 'qrcode.react'
+import { apiGet, API_ENDPOINTS } from '../utils/api'
 
 const ITEMS_PER_PAGE = 6
 
@@ -363,14 +364,7 @@ const ProjectPage = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-        const response = await fetch(`${apiBaseUrl}/projects`)
-
-        if (!response.ok) {
-          throw new Error('프로젝트 데이터를 불러오는 데 실패했습니다.')
-        }
-
-        const data: ProjectsApiResponse = await response.json()
+        const data: ProjectsApiResponse = await apiGet<ProjectsApiResponse>(API_ENDPOINTS.PROJECTS)
 
         // 연도별로 그룹화
         const groupedByYear: Record<number, UIProject[]> = {}
@@ -444,14 +438,7 @@ const ProjectPage = () => {
     // 프로젝트 상세 정보 가져오기
     setLoadingDetail(true)
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-      const response = await fetch(`${apiBaseUrl}/projects/${project.id}`)
-
-      if (!response.ok) {
-        throw new Error('프로젝트 상세 정보를 불러오는 데 실패했습니다.')
-      }
-
-      const data: ProjectDetailApiResponse = await response.json()
+      const data: ProjectDetailApiResponse = await apiGet<ProjectDetailApiResponse>(API_ENDPOINTS.PROJECT_DETAIL(project.id))
       
       if (data.work.main_url) {
         setSelectedProject({

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
+import { homeApiGet, API_ENDPOINTS } from '../utils/api'
 
 // API 응답 타입 정의
 interface CalendarEvent {
@@ -363,14 +364,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-        const response = await fetch(`${apiBaseUrl}/home`)
-
-        if (!response.ok) {
-          throw new Error('홈 데이터를 불러오는 데 실패했습니다.')
-        }
-
-        const data: HomeApiResponse = await response.json()
+        const data: HomeApiResponse = await homeApiGet<HomeApiResponse>(API_ENDPOINTS.HOME)
 
         // Lab 데이터 설정
         setLabData(data.lab)
