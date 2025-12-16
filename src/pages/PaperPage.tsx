@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
+import { apiGet, API_ENDPOINTS } from '../utils/api'
 
 // API 응답 타입 정의
 interface Paper {
@@ -112,14 +113,7 @@ const PaperPage = () => {
   useEffect(() => {
     const fetchPapers = async () => {
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-        const response = await fetch(`${apiBaseUrl}/papers`)
-
-        if (!response.ok) {
-          throw new Error('논문 데이터를 불러오는 데 실패했습니다.')
-        }
-
-        const data: PapersApiResponse = await response.json()
+        const data: PapersApiResponse = await apiGet<PapersApiResponse>(API_ENDPOINTS.PAPERS)
 
         // image_url 배열로 변환
         if (data.papers && data.papers.length > 0) {
