@@ -2,16 +2,21 @@ import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 import { apiGet, API_ENDPOINTS, processImageUrl } from '../utils/api'
 
-// API 응답 타입 정의 (PaperPage와 동일)
+// API 응답 타입 정의
 interface Patent {
-  id: number
+  id: string
   year: number
-  image_url: string
-  image_type: string
+  pdf_url: string
 }
 
 interface PatentsApiResponse {
-  papers: Patent[]
+  patents: Patent[]
+}
+
+// 특허 데이터 타입
+interface PatentData {
+  url: string
+  type: 'pdf'
 }
 
 const PatentContainer = styled.div`
@@ -51,6 +56,14 @@ const SlideImage = styled.img<{ $totalSlides: number }>`
   height: 100%;
   object-fit: cover;
   flex-shrink: 0;
+`
+
+const SlidePdf = styled.iframe<{ $totalSlides: number }>`
+  width: ${(props) => 100 / (props.$totalSlides + 2)}%;
+  height: 100%;
+  border: none;
+  flex-shrink: 0;
+  display: block;
 `
 
 const SlideIndicators = styled.div`
@@ -104,7 +117,7 @@ const Indicator = styled.button<{ $active: boolean }>`
 `
 
 const PatentPage = () => {
-  const [patentImages, setPatentImages] = useState<string[]>([])
+  const [patentData, setPatentData] = useState<PatentData[]>([])
   const [slideIndex, setSlideIndex] = useState(1) // 첫 번째 클론 다음부터 시작 (인덱스 1)
   const [isTransitioning, setIsTransitioning] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -116,10 +129,20 @@ const PatentPage = () => {
       try {
         const data: PatentsApiResponse = await apiGet<PatentsApiResponse>(API_ENDPOINTS.PATENT)
 
-        // image_url 배열로 변환
-        if (data.papers && data.papers.length > 0) {
-          const imageUrls = data.papers.map((patent) => processImageUrl(patent.image_url))
-          setPatentImages(imageUrls)
+        // pdf_url을 처리하여 저장 (모두 PDF)
+        if (data.patents && data.patents.length > 0) {
+          const patentDataList = data.patents.map((patent) => {
+            const processedUrl = processImageUrl(patent.pdf_url)
+            // PDF를 꽉 차게 표시하기 위한 파라미터 추가
+            const pdfUrl = processedUrl.includes('#') 
+              ? processedUrl 
+              : `${processedUrl}#view=FitH`
+            return {
+              url: pdfUrl,
+              type: 'pdf' as const
+            }
+          })
+          setPatentData(patentDataList)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.')
@@ -139,16 +162,16 @@ const PatentPage = () => {
       // transition이 끝난 후 클론 위치에 있으면 실제 위치로 즉시 이동
       if (slideIndex === 0) {
         // 첫 번째 클론에 도달하면 마지막 실제 이미지로 이동
-        setSlideIndex(patentImages.length)
-      } else if (slideIndex === patentImages.length + 1) {
+        setSlideIndex(patentData.length)
+      } else if (slideIndex === patentData.length + 1) {
         // 마지막 클론에 도달하면 첫 번째 실제 이미지로 이동
         setSlideIndex(1)
       }
     }
-  }, [isTransitioning, slideIndex, patentImages.length])
+  }, [isTransitioning, slideIndex, patentData.length])
 
   const handleSlidePrev = useCallback(() => {
-    if (patentImages.length <= 1) return
+    if (patentData.length <= 1) return
 
     if (slideIndex === 1) {
       // 첫 번째 실제 이미지에서 마지막 클론으로 이동
@@ -156,7 +179,7 @@ const PatentPage = () => {
       setSlideIndex(0)
       setTimeout(() => {
         setIsTransitioning(false)
-        setSlideIndex(patentImages.length)
+        setSlideIndex(patentData.length)
       }, 500)
     } else {
       setIsTransitioning(true)
@@ -165,15 +188,15 @@ const PatentPage = () => {
         setIsTransitioning(false)
       }, 500)
     }
-  }, [slideIndex, patentImages.length])
+  }, [slideIndex, patentData.length])
 
   const handleSlideNext = useCallback(() => {
-    if (patentImages.length <= 1) return
+    if (patentData.length <= 1) return
 
-    if (slideIndex === patentImages.length) {
+    if (slideIndex === patentData.length) {
       // 마지막 실제 이미지에서 첫 번째 클론으로 이동
       setIsTransitioning(true)
-      setSlideIndex(patentImages.length + 1)
+      setSlideIndex(patentData.length + 1)
       setTimeout(() => {
         setIsTransitioning(false)
         setSlideIndex(1)
@@ -185,18 +208,18 @@ const PatentPage = () => {
         setIsTransitioning(false)
       }, 500)
     }
-  }, [slideIndex, patentImages.length])
+  }, [slideIndex, patentData.length])
 
   // 슬라이드 자동 재생
   useEffect(() => {
-    if (patentImages.length <= 1) return
+    if (patentData.length <= 1) return
 
     const slideInterval = setInterval(() => {
       handleSlideNext()
     }, 5000)
 
     return () => clearInterval(slideInterval)
-  }, [patentImages.length, handleSlideNext])
+  }, [patentData.length, handleSlideNext])
 
   const handleIndicatorClick = (index: number) => {
     setIsTransitioning(true)
@@ -207,7 +230,7 @@ const PatentPage = () => {
   }
 
   // 실제 슬라이드 인덱스 계산 (클론 제외, 인디케이터용)
-  const actualSlideIndex = slideIndex <= 0 ? patentImages.length - 1 : slideIndex > patentImages.length ? 0 : slideIndex - 1
+  const actualSlideIndex = slideIndex <= 0 ? patentData.length - 1 : slideIndex > patentData.length ? 0 : slideIndex - 1
 
   if (loading) {
     return (
@@ -219,7 +242,7 @@ const PatentPage = () => {
     )
   }
 
-  if (error && patentImages.length === 0) {
+  if (error && patentData.length === 0) {
     return (
       <PatentContainer>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', fontSize: '2rem', color: '#dc3545' }}>
@@ -229,7 +252,7 @@ const PatentPage = () => {
     )
   }
 
-  if (patentImages.length === 0) {
+  if (patentData.length === 0) {
     return (
       <PatentContainer>
         <SlideSection>
@@ -247,36 +270,36 @@ const PatentPage = () => {
       <SlideSection>
         <SlideWrapper
           $currentIndex={slideIndex}
-          $totalSlides={patentImages.length}
+          $totalSlides={patentData.length}
           $isTransitioning={isTransitioning}
         >
-          {/* 마지막 이미지 클론 (무한 루프용) */}
-          {patentImages.length > 0 && (
+          {/* 마지막 PDF 클론 (무한 루프용) */}
+          {patentData.length > 0 && (
             <>
-              <SlideImage 
-                $totalSlides={patentImages.length} 
-                src={patentImages[patentImages.length - 1]} 
-                alt="Patent slide clone last"
+              <SlidePdf 
+                $totalSlides={patentData.length} 
+                src={patentData[patentData.length - 1].url}
+                title="Patent slide clone last"
               />
-              {/* 실제 이미지들 */}
-              {patentImages.map((image, index) => (
-                <SlideImage 
+              {/* 실제 PDF들 */}
+              {patentData.map((patent, index) => (
+                <SlidePdf 
                   key={index} 
-                  $totalSlides={patentImages.length} 
-                  src={image} 
-                  alt={`Patent slide ${index + 1}`}
+                  $totalSlides={patentData.length} 
+                  src={patent.url}
+                  title={`Patent slide ${index + 1}`}
                 />
               ))}
-              {/* 첫 번째 이미지 클론 (무한 루프용) */}
-              <SlideImage 
-                $totalSlides={patentImages.length} 
-                src={patentImages[0]} 
-                alt="Patent slide clone first"
+              {/* 첫 번째 PDF 클론 (무한 루프용) */}
+              <SlidePdf 
+                $totalSlides={patentData.length} 
+                src={patentData[0].url}
+                title="Patent slide clone first"
               />
             </>
           )}
         </SlideWrapper>
-        {patentImages.length > 1 && (
+        {patentData.length > 1 && (
           <>
             <SlideButton $direction="left" onClick={handleSlidePrev}>
               ‹
@@ -285,7 +308,7 @@ const PatentPage = () => {
               ›
             </SlideButton>
             <SlideIndicators>
-              {patentImages.map((_, index) => (
+              {patentData.map((_, index) => (
                 <Indicator
                   key={index}
                   $active={index === actualSlideIndex}

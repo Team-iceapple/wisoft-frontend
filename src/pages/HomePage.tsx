@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
-import { homeApiGet, API_ENDPOINTS, processImageUrl, HOME_API_BASE_URL } from '../utils/api'
+import { apiGet, API_ENDPOINTS, processImageUrl, API_BASE_URL } from '../utils/api'
 
 // API 응답 타입 정의
 interface CalendarEvent {
@@ -364,12 +364,12 @@ const HomePage = () => {
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
-        const data: HomeApiResponse = await homeApiGet<HomeApiResponse>(API_ENDPOINTS.HOME)
+        const data: HomeApiResponse = await apiGet<HomeApiResponse>(API_ENDPOINTS.HOME)
 
         // Lab 데이터 설정
         setLabData(data.lab)
         if (data.lab.image_urls && data.lab.image_urls.length > 0) {
-          const processedUrls = data.lab.image_urls.map((url) => processImageUrl(url, HOME_API_BASE_URL))
+          const processedUrls = data.lab.image_urls.map((url) => processImageUrl(url, API_BASE_URL))
           setSlideImages(processedUrls)
         }
 

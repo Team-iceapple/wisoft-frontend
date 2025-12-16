@@ -346,10 +346,6 @@ const ProjectPage = () => {
     try {
       const data: ProjectDetailApiResponse = await apiGet<ProjectDetailApiResponse>(API_ENDPOINTS.PROJECT_DETAIL(project.id))
       
-      // API 응답 로깅 (디버깅용)
-      console.log('프로젝트 상세 응답:', data)
-      console.log('main_url 값:', data.main_url)
-      
       // main_url이 존재하는지 확인 (빈 문자열도 체크)
       const mainUrl = data.main_url?.trim() || ''
       
@@ -365,12 +361,9 @@ const ProjectPage = () => {
             projectName: data.name || project.projectName,
             qrLink: project.qrLink,
           })
-        } else {
-          console.warn('main_url이 없습니다:', data)
         }
       }
     } catch (err) {
-      console.error('프로젝트 상세 정보 로딩 오류:', err)
       // 에러가 발생해도 기본 정보로 모달 표시 시도
       if (project.qrLink) {
         setSelectedProject({
@@ -386,12 +379,6 @@ const ProjectPage = () => {
   const handleCloseModal = () => {
     setSelectedProject(null)
     setLoadingDetail(false)
-  }
-
-  const handleModalOverlayClick = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      handleCloseModal()
-    }
   }
 
   if (loading) {
@@ -463,12 +450,10 @@ const ProjectPage = () => {
       )}
 
       <ModalOverlay 
-        $isOpen={!!selectedProject || loadingDetail} 
-        onClick={handleModalOverlayClick}
-        onTouchStart={handleModalOverlayClick}
+        $isOpen={!!selectedProject || loadingDetail}
       >
-        <ModalContent onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
-          <ModalCloseButton onClick={handleCloseModal} onTouchStart={handleCloseModal}>×</ModalCloseButton>
+        <ModalContent>
+          <ModalCloseButton onClick={handleCloseModal}>×</ModalCloseButton>
           {loadingDetail ? (
             <div style={{ fontSize: '2rem', padding: '4rem' }}>로딩 중...</div>
           ) : selectedProject ? (
