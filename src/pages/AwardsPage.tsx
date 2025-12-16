@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
+import { processImageUrl } from '../utils/api'
 
 // API 응답 타입 정의
 interface Award {
@@ -94,7 +95,7 @@ const AwardsPage = () => {
 
         // image_url 배열로 변환
         if (data.awards && data.awards.length > 0) {
-          const imageUrls = data.awards.map((award) => award.image_url)
+          const imageUrls = data.awards.map((award) => processImageUrl(award.image_url))
           setAwardImages(imageUrls)
         }
       } catch (err) {

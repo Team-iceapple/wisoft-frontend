@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
+import { apiGet, API_ENDPOINTS, processImageUrl } from '../utils/api'
 
 // API 응답 타입 정의 (PaperPage와 동일)
 interface Patent {
@@ -113,18 +114,11 @@ const PatentPage = () => {
   useEffect(() => {
     const fetchPatents = async () => {
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-        const response = await fetch(`${apiBaseUrl}/patent`)
-
-        if (!response.ok) {
-          throw new Error('특허 데이터를 불러오는 데 실패했습니다.')
-        }
-
-        const data: PatentsApiResponse = await response.json()
+        const data: PatentsApiResponse = await apiGet<PatentsApiResponse>(API_ENDPOINTS.PATENT)
 
         // image_url 배열로 변환
         if (data.papers && data.papers.length > 0) {
-          const imageUrls = data.papers.map((patent) => patent.image_url)
+          const imageUrls = data.papers.map((patent) => processImageUrl(patent.image_url))
           setPatentImages(imageUrls)
         }
       } catch (err) {

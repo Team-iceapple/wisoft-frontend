@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
-import { homeApiGet, API_ENDPOINTS } from '../utils/api'
+import { homeApiGet, API_ENDPOINTS, processImageUrl, HOME_API_BASE_URL } from '../utils/api'
 
 // API 응답 타입 정의
 interface CalendarEvent {
@@ -369,7 +369,8 @@ const HomePage = () => {
         // Lab 데이터 설정
         setLabData(data.lab)
         if (data.lab.image_urls && data.lab.image_urls.length > 0) {
-          setSlideImages(data.lab.image_urls)
+          const processedUrls = data.lab.image_urls.map((url) => processImageUrl(url, HOME_API_BASE_URL))
+          setSlideImages(processedUrls)
         }
 
         // Calendar 데이터 변환 및 설정

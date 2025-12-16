@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import { processImageUrl, HOME_API_BASE_URL } from '../utils/api'
 
 interface Seminar {
   title: string
@@ -172,8 +173,8 @@ const SeminarPage = () => {
         const data = await response.json()
         const formattedData: Seminar[] = data.map((item: any) => ({
           title: item.title || 'Untitled',
-          cover: item.cover || '/default-banner.png',
-          icon: item.icon || null,
+          cover: processImageUrl(item.cover || '/default-banner.png', HOME_API_BASE_URL),
+          icon: item.icon ? processImageUrl(item.icon, HOME_API_BASE_URL) : null,
           link: item.link || '#',
         }))
 

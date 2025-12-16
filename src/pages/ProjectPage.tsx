@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
 import { QRCodeSVG } from 'qrcode.react'
-import { apiGet, API_ENDPOINTS } from '../utils/api'
+import { apiGet, API_ENDPOINTS, processImageUrl } from '../utils/api'
 
 const ITEMS_PER_PAGE = 6
 
@@ -23,9 +23,9 @@ interface Project {
 interface ProjectDetail {
   id: string
   name: string
-  team_name: string
+  team_name: string | null
   members: Member[]
-  pdf_url?: string
+  pdf_url?: string | null
   description: string
   main_url: string
   year: number
@@ -35,9 +35,7 @@ interface ProjectsApiResponse {
   projects: Project[]
 }
 
-interface ProjectDetailApiResponse {
-  work: ProjectDetail
-}
+interface ProjectDetailApiResponse extends ProjectDetail {}
 
 // UI용 프로젝트 타입
 interface UIProject {
@@ -79,64 +77,6 @@ const Container = styled.div`
   padding: 2rem 4rem 4rem;
   gap: 2rem;
   overflow: hidden;
-`
-
-const YearSelector = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 0;
-  position: relative;
-  flex-shrink: 0;
-`
-
-const YearButton = styled.button`
-  font-size: 4rem;
-  font-weight: bold;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #000;
-  padding: 1rem 2rem;
-  transition: opacity 0.3s;
-
-  &:hover {
-    opacity: 0.7;
-  }
-`
-
-const YearDropdown = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  border: 0.2rem solid #ddd;
-  border-radius: 1rem;
-  box-shadow: 0 0.4rem 0.6rem rgba(0, 0, 0, 0.1);
-  z-index: 100;
-  display: ${(props) => (props.$isOpen ? 'flex' : 'none')};
-  flex-direction: column;
-  min-width: 20rem;
-  margin-top: 1rem;
-`
-
-const YearOption = styled.button`
-  padding: 1.2rem 2.5rem;
-  font-size: 2.2rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: center;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #f0f0f0;
-  }
-
-  &:not(:last-child) {
-    border-bottom: 0.1rem solid #eee;
-  }
 `
 
 const ProjectsGrid = styled.div`
@@ -345,10 +285,7 @@ const PaginationIndicator = styled.button<{ $active: boolean }>`
 `
 
 const ProjectPage = () => {
-  const [projectsByYear, setProjectsByYear] = useState<Record<number, UIProject[]>>({})
-  const [availableYears, setAvailableYears] = useState<number[]>([])
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false)
+  const [projects, setProjects] = useState<UIProject[]>([])
   const [currentPage, setCurrentPage] = useState(0)
   const [selectedProject, setSelectedProject] = useState<{
     projectName: string
@@ -358,47 +295,30 @@ const ProjectPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
 
-  const currentProjects = projectsByYear[selectedYear] || []
-
   // API에서 프로젝트 목록 가져오기
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const data: ProjectsApiResponse = await apiGet<ProjectsApiResponse>(API_ENDPOINTS.PROJECTS)
 
-        // 연도별로 그룹화
-        const groupedByYear: Record<number, UIProject[]> = {}
-        
-        data.projects.forEach((project) => {
-          if (!groupedByYear[project.year]) {
-            groupedByYear[project.year] = []
-          }
-
+        // 모든 프로젝트를 단일 배열로 변환
+        const allProjects: UIProject[] = data.projects.map((project) => {
           // members 배열을 문자열 배열로 변환 (name + extra)
           const participants = project.members.map((member) => 
             member.extra ? `${member.name} (${member.extra})` : member.name
           )
 
-          groupedByYear[project.year].push({
+          return {
             id: project.id,
-            image: project.thumbnail,
+            image: processImageUrl(project.thumbnail),
             projectName: project.name,
             participants,
             qrLink: undefined, // 상세 정보에서 가져올 예정
             status: '진행중', // API 응답에 status가 없으므로 기본값 사용
-          })
+          }
         })
 
-        // 연도 정렬
-        const years = Object.keys(groupedByYear)
-          .map(Number)
-          .sort((a, b) => b - a)
-
-        setProjectsByYear(groupedByYear)
-        setAvailableYears(years)
-        if (years.length > 0) {
-          setSelectedYear(years[0])
-        }
+        setProjects(allProjects)
       } catch (err) {
         setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.')
         console.error('프로젝트 데이터 로딩 오류:', err)
@@ -410,25 +330,11 @@ const ProjectPage = () => {
     fetchProjects()
   }, [])
 
-  // 연도 변경 시 첫 페이지로 리셋
-  useEffect(() => {
-    setCurrentPage(0)
-  }, [selectedYear])
-
   // 페이지네이션 계산
-  const totalPages = Math.ceil(currentProjects.length / ITEMS_PER_PAGE)
+  const totalPages = Math.ceil(projects.length / ITEMS_PER_PAGE)
   const startIndex = currentPage * ITEMS_PER_PAGE
   const endIndex = startIndex + ITEMS_PER_PAGE
-  const displayedProjects = currentProjects.slice(startIndex, endIndex)
-
-  const handleYearClick = () => {
-    setIsYearDropdownOpen(!isYearDropdownOpen)
-  }
-
-  const handleYearSelect = (year: number) => {
-    setSelectedYear(year)
-    setIsYearDropdownOpen(false)
-  }
+  const displayedProjects = projects.slice(startIndex, endIndex)
 
   const handlePageChange = (pageIndex: number) => {
     setCurrentPage(pageIndex)
@@ -440,11 +346,28 @@ const ProjectPage = () => {
     try {
       const data: ProjectDetailApiResponse = await apiGet<ProjectDetailApiResponse>(API_ENDPOINTS.PROJECT_DETAIL(project.id))
       
-      if (data.work.main_url) {
+      // API 응답 로깅 (디버깅용)
+      console.log('프로젝트 상세 응답:', data)
+      console.log('main_url 값:', data.main_url)
+      
+      // main_url이 존재하는지 확인 (빈 문자열도 체크)
+      const mainUrl = data.main_url?.trim() || ''
+      
+      if (mainUrl) {
         setSelectedProject({
-          projectName: data.work.name,
-          qrLink: data.work.main_url,
+          projectName: data.name || project.projectName,
+          qrLink: mainUrl,
         })
+      } else {
+        // main_url이 없으면 프로젝트 정보로 모달 표시 시도
+        if (project.qrLink) {
+          setSelectedProject({
+            projectName: data.name || project.projectName,
+            qrLink: project.qrLink,
+          })
+        } else {
+          console.warn('main_url이 없습니다:', data)
+        }
       }
     } catch (err) {
       console.error('프로젝트 상세 정보 로딩 오류:', err)
@@ -497,21 +420,6 @@ const ProjectPage = () => {
         배너 사진을 클릭하면 배포 QR을 볼 수 있습니다
       </InfoText>
 
-      {availableYears.length > 0 && (
-        <YearSelector>
-          <YearButton onClick={handleYearClick}>
-            {selectedYear}
-          </YearButton>
-          <YearDropdown $isOpen={isYearDropdownOpen}>
-            {availableYears.map((year) => (
-              <YearOption key={year} onClick={() => handleYearSelect(year)}>
-                {year}
-              </YearOption>
-            ))}
-          </YearDropdown>
-        </YearSelector>
-      )}
-
       <ProjectsGrid>
         {displayedProjects.length > 0 ? (
           displayedProjects.map((project) => (
@@ -536,7 +444,7 @@ const ProjectPage = () => {
           ))
         ) : (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '2rem', color: '#666', padding: '4rem' }}>
-            {selectedYear}년 프로젝트가 없습니다
+            프로젝트가 없습니다
           </div>
         )}
       </ProjectsGrid>
@@ -566,15 +474,23 @@ const ProjectPage = () => {
           ) : selectedProject ? (
             <>
               <ModalTitle>{selectedProject.projectName}</ModalTitle>
-              <ModalQRCode>
-                <QRCodeSVG
-                  value={selectedProject.qrLink}
-                  size={300}
-                  level="H"
-                  includeMargin={false}
-                />
-              </ModalQRCode>
-              <ModalLink>{selectedProject.qrLink}</ModalLink>
+              {selectedProject.qrLink ? (
+                <>
+                  <ModalQRCode>
+                    <QRCodeSVG
+                      value={selectedProject.qrLink}
+                      size={300}
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </ModalQRCode>
+                  <ModalLink>{selectedProject.qrLink}</ModalLink>
+                </>
+              ) : (
+                <div style={{ fontSize: '1.8rem', color: '#666', padding: '2rem' }}>
+                  배포 링크가 없습니다.
+                </div>
+              )}
             </>
           ) : null}
         </ModalContent>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
-import { apiGet, API_ENDPOINTS } from '../utils/api'
+import { apiGet, API_ENDPOINTS, processImageUrl } from '../utils/api'
 
 // API 응답 타입 정의
 interface Paper {
@@ -117,7 +117,7 @@ const PaperPage = () => {
 
         // image_url 배열로 변환
         if (data.papers && data.papers.length > 0) {
-          const imageUrls = data.papers.map((paper) => paper.image_url)
+          const imageUrls = data.papers.map((paper) => processImageUrl(paper.image_url))
           setPaperImages(imageUrls)
         }
       } catch (err) {
