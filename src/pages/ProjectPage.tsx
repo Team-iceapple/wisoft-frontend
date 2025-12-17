@@ -103,6 +103,12 @@ const ProjectImage = styled.img`
   height: 100%;
   object-fit: cover;
   opacity: 0.7;
+  border-radius: 1.5rem;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
 `
 
 const ProjectInfo = styled.div`
@@ -274,20 +280,34 @@ const ProjectPage = () => {
     <Container>
       <InfoText>배너 사진을 클릭하면 배포 QR을 볼 수 있습니다</InfoText>
       <ProjectsGrid>
-        {displayedProjects.map((project) => (
-          <ProjectCard key={project.id}>
-            <ProjectImageWrapper onClick={() => handleProjectClick(project)}>
-              <ProjectImage src={project.image} alt={project.projectName} />
-              <ProjectInfo>
-                <ProjectNameContainer>
-                  <ProjectName>{project.projectName}</ProjectName>
-                  <StatusBadge $status={project.status}>{project.status}</StatusBadge>
-                </ProjectNameContainer>
-                <Participants>{project.participants.join(' ')}</Participants>
-              </ProjectInfo>
-            </ProjectImageWrapper>
-          </ProjectCard>
-        ))}
+        {displayedProjects.length > 0 ? (
+          displayedProjects.map((project) => (
+            <ProjectCard key={project.id}>
+              {project.specialNote && <SpecialNote>{project.specialNote}</SpecialNote>}
+              <ProjectImageWrapper onClick={() => handleProjectClick(project)}>
+                <ProjectImage 
+                  src={project.image} 
+                  alt={project.projectName}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                />
+                <ProjectInfo>
+                  <ProjectNameContainer>
+                    <ProjectName>{project.projectName}</ProjectName>
+                    <StatusBadge $status={project.status}>
+                      {project.status}
+                    </StatusBadge>
+                  </ProjectNameContainer>
+                  <Participants>{project.participants.join(' ')}</Participants>
+                </ProjectInfo>
+              </ProjectImageWrapper>
+            </ProjectCard>
+          ))
+        ) : (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '2rem', color: '#666', padding: '4rem' }}>
+            프로젝트가 없습니다
+          </div>
+        )}
       </ProjectsGrid>
 
       {totalPages > 1 && (
