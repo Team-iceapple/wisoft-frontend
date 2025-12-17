@@ -4,14 +4,13 @@ import { apiGet, API_ENDPOINTS, processImageUrl } from '../utils/api'
 
 const ITEMS_PER_PAGE = 6
 
-// API 응답 타입 정의 (기존 유지 및 확장)
 interface Patent {
   id: string
   year: number
   pdf_url: string
-  name?: string; // 특허명 (API에 없을 경우를 대비해 선택 사항)
-  authors?: string[]; // 참여 인원
-  thumbnail?: string; // 썸네일 이미지
+  name?: string
+  authors?: string[]
+  thumbnail?: string
 }
 
 interface PatentsApiResponse {
@@ -79,7 +78,7 @@ const PatentImage = styled.img`
   object-fit: cover;
   opacity: 0.7;
   border-radius: 1.5rem;
-  background: #eee; /* 이미지 로딩 전 배경 */
+  background: #eee;
 `
 
 const PatentInfo = styled.div`
@@ -103,7 +102,8 @@ const Authors = styled.div`
   line-height: 1.4;
 `
 
-// 모달 스타일 (ProjectPage 참조)
+
+
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
@@ -183,7 +183,7 @@ const PatentPage = () => {
         const data: PatentsApiResponse = await apiGet<PatentsApiResponse>(API_ENDPOINTS.PATENT)
         setPatents(data.patents || [])
       } catch (err) {
-        console.error('특허 로딩 오류:', err)
+        console.error(err)
       } finally {
         setLoading(false)
       }
@@ -194,38 +194,29 @@ const PatentPage = () => {
   const totalPages = Math.ceil(patents.length / ITEMS_PER_PAGE)
   const displayedPatents = patents.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE)
 
-  const handlePatentClick = (patent: Patent) => {
-    setSelectedPatent(patent)
-  }
+  const handleCloseModal = () => setSelectedPatent(null)
 
-  if (loading) return <Container><div style={{ textAlign: 'center', fontSize: '2rem' }}>로딩 중...</div></Container>
+  if (loading) return null
 
   return (
     <Container>
       <InfoText>특허를 클릭하면 상세 문서를 확인할 수 있습니다</InfoText>
-
       <PatentGrid>
-        {displayedPatents.length > 0 ? (
-          displayedPatents.map((patent) => (
-            <PatentCard key={patent.id}>
-              <PatentImageWrapper onClick={() => handlePatentClick(patent)}>
-                {/* 썸네일이 없을 경우를 대비해 pdf_url이나 기본 이미지 처리 필요 */}
-                <PatentImage 
-                  src={patent.thumbnail ? processImageUrl(patent.thumbnail) : '/patent_placeholder.png'} 
-                  alt={patent.name || '특허 이미지'}
-                />
-                <PatentInfo>
-                  <PatentName>{patent.name || `${patent.name}`}</PatentName>
-                  <Authors>{patent.authors?.join(', ') || '연구진 정보 없음'}</Authors>
-                </PatentInfo>
-              </PatentImageWrapper>
-            </PatentCard>
-          ))
-        ) : (
-          <div style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '2rem', color: '#666' }}>
-            등록된 특허가 없습니다
-          </div>
-        )}
+        {displayedPatents.map((patent) => (
+          <PatentCard key={patent.id}>
+          
+            <PatentImageWrapper onClick={() => setSelectedPatent(patent)}>
+              <PatentImage 
+                src={patent.thumbnail ? processImageUrl(patent.thumbnail) : ''} 
+                alt={patent.name}
+              />
+              <PatentInfo>
+                <PatentName>{patent.name || `${patent.id}`}</PatentName>
+                <Authors>{patent.authors?.join(', ') || '연구진 정보 없음'}</Authors>
+              </PatentInfo>
+            </PatentImageWrapper>
+          </PatentCard>
+        ))}
       </PatentGrid>
 
       {totalPages > 1 && (
@@ -240,15 +231,13 @@ const PatentPage = () => {
         </PaginationContainer>
       )}
 
-      {/* 특허 상세 모달 */}
-      <ModalOverlay $isOpen={!!selectedPatent}>
-        <ModalContent>
+      <ModalOverlay $isOpen={!!selectedPatent} onClick={handleCloseModal}>
+        <ModalContent onClick={(e) => e.stopPropagation()}>
           <ModalHeader>
             <ModalTitle>{selectedPatent?.name || '특허 상세 정보'}</ModalTitle>
-            <ModalCloseButton onClick={() => setSelectedPatent(null)}>×</ModalCloseButton>
+            <ModalCloseButton onClick={handleCloseModal}>×</ModalCloseButton>
           </ModalHeader>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0', borderRadius: '1rem', fontSize: '2rem', color: '#666' }}>
-            {/* 여기에 나중에 iframe이나 PDF 뷰어를 넣으시면 됩니다 */}
             PDF 문서 영역 (준비 중)
           </div>
         </ModalContent>
