@@ -1,4 +1,4 @@
-import { useLocation, Link } from 'react-router-dom'
+import { useLocation, Link, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { FaHome, FaLaptop, FaFileAlt, FaTrophy, FaCertificate, FaChalkboardTeacher, FaUsers } from 'react-icons/fa'
 
@@ -33,10 +33,30 @@ const NavIcon = styled(Link)`
     text-decoration: none;
     color: #000;
     transition: background-color 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 
     &:active {
         background-color: #f0f0f0;
     }
+`
+
+const DisabledNavIcon = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 1rem 1.5rem;
+    border-radius: 0.8rem;
+    color: #000;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 `
 
 const IconWrapper = styled.div`
@@ -65,54 +85,84 @@ const getTitle = (pathname: string): string => {
 
 const Header = () => {
     const location = useLocation()
+    const navigate = useNavigate()
     const title = getTitle(location.pathname)
+
+    const handleNavClick = (e: React.MouseEvent | React.TouchEvent, path: string) => {
+        e.preventDefault()
+        navigate(path)
+    }
 
     return (
         <HeaderContainer>
             <Title>{title}</Title>
             <Nav>
-                <NavIcon to="/">
+                <NavIcon 
+                    to="/"
+                    onMouseDown={(e) => handleNavClick(e, '/')}
+                    onTouchStart={(e) => handleNavClick(e, '/')}
+                >
                     <IconWrapper>
                         <FaHome />
                     </IconWrapper>
                     <NavText>Home</NavText>
                 </NavIcon>
-                <NavIcon to="/project">
+                <NavIcon 
+                    to="/project"
+                    onMouseDown={(e) => handleNavClick(e, '/project')}
+                    onTouchStart={(e) => handleNavClick(e, '/project')}
+                >
                     <IconWrapper>
                         <FaLaptop />
                     </IconWrapper>
                     <NavText>Project</NavText>
                 </NavIcon>
-                <NavIcon to="/paper">
+                <NavIcon 
+                    to="/paper"
+                    onMouseDown={(e) => handleNavClick(e, '/paper')}
+                    onTouchStart={(e) => handleNavClick(e, '/paper')}
+                >
                     <IconWrapper>
                         <FaFileAlt />
                     </IconWrapper>
                     <NavText>Paper</NavText>
                 </NavIcon>
-                <NavIcon to="/awards">
+                <NavIcon 
+                    to="/awards"
+                    onMouseDown={(e) => handleNavClick(e, '/awards')}
+                    onTouchStart={(e) => handleNavClick(e, '/awards')}
+                >
                     <IconWrapper>
                         <FaTrophy />
                     </IconWrapper>
                     <NavText>Awards</NavText>
                 </NavIcon>
-                <NavIcon to="/patent">
+                <NavIcon 
+                    to="/patent"
+                    onMouseDown={(e) => handleNavClick(e, '/patent')}
+                    onTouchStart={(e) => handleNavClick(e, '/patent')}
+                >
                     <IconWrapper>
                         <FaCertificate />
                     </IconWrapper>
                     <NavText>Patent</NavText>
                 </NavIcon>
-                <NavIcon to="/seminar">
+                <NavIcon 
+                    to="/seminar"
+                    onMouseDown={(e) => handleNavClick(e, '/seminar')}
+                    onTouchStart={(e) => handleNavClick(e, '/seminar')}
+                >
                     <IconWrapper>
                         <FaChalkboardTeacher />
                     </IconWrapper>
                     <NavText>Seminar</NavText>
                 </NavIcon>
-                <NavIcon to="/member">
+                <DisabledNavIcon>
                     <IconWrapper>
                         <FaUsers />
                     </IconWrapper>
                     <NavText>Member</NavText>
-                </NavIcon>
+                </DisabledNavIcon>
             </Nav>
         </HeaderContainer>
     )
