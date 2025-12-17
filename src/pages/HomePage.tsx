@@ -93,7 +93,7 @@ const SlideImage = styled.img<{ $totalSlides: number }>`
 const SlideButton = styled.button<{ $direction: 'left' | 'right' }>`
   position: absolute;
   top: 50%;
-  ${(props) => (props.$direction === 'left' ? 'left: 3rem;' : 'right: 3rem;')}
+  ${(props) => (props.$direction === 'left' ? 'left: 25rem;' : 'right: 25rem;')}
   transform: translateY(-50%);
   width: 4rem;
   height: 4rem;
