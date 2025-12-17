@@ -99,6 +99,11 @@ const AwardImage = styled.img`
   width: auto;
   object-fit: contain;
   object-position: center;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
 `
 
 const getImageOrientation = (imageUrl: string): Promise<'landscape' | 'portrait'> => {
@@ -237,6 +242,8 @@ const AwardsPage = () => {
                       <AwardImage
                         src={image}
                         alt={`Award row ${rowIndex + 1} item ${index + 1}`}
+                        draggable={false}
+                        onDragStart={(e) => e.preventDefault()}
                       />
                     </AwardItem>
                   ))}
