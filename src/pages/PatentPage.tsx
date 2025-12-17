@@ -1,156 +1,189 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { apiGet, API_ENDPOINTS, processImageUrl } from '../utils/api'
 
+const ITEMS_PER_PAGE = 6
+
+// API 응답 타입 정의 (기존 유지 및 확장)
 interface Patent {
   id: string
   year: number
   pdf_url: string
+  name?: string; // 특허명 (API에 없을 경우를 대비해 선택 사항)
+  authors?: string[]; // 참여 인원
+  thumbnail?: string; // 썸네일 이미지
 }
 
 interface PatentsApiResponse {
   patents: Patent[]
 }
 
-interface PatentData {
-  url: string
-  type: 'pdf'
-}
-
-const PatentContainer = styled.div`
+const Container = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 4rem 2rem 1rem;
-  gap: 1rem;
+  padding: 2rem 4rem 4rem;
+  gap: 2rem;
   overflow: hidden;
-  align-items: center;
-  justify-content: flex-start;
 `
 
-const SlideSection = styled.section`
-  position: relative;
-  width: 100%;
-  max-width: 140rem;
-  height: 92%;
+const InfoText = styled.div`
+  text-align: center;
+  font-size: 1.6rem;
+  color: #666;
+  padding: 1.2rem;
+  background: #f8f9fa;
+  border-radius: 1rem;
+  flex-shrink: 0;
+`
+
+const PatentGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2.5rem;
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  border-radius: 2rem;
-  background: #525252;
 `
 
-const SlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: number; $isTransitioning: boolean }>`
+const PatentCard = styled.div`
   display: flex;
-  width: ${(props) => (props.$totalSlides + 2) * 100}%;
-  height: 100%;
-  transform: translateX(${(props) => -(props.$currentIndex) * (100 / (props.$totalSlides + 2))}%);
-  transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
+  flex-direction: column;
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: #f8f9fa;
+  min-height: 0;
 `
 
-const SlidePdf = styled.iframe<{ $totalSlides: number }>`
-  width: ${(props) => 100 / (props.$totalSlides + 2)}%;
-  height: 100%;
-  border: none;
-  flex-shrink: 0;
-  display: block;
-`
-
-const SlideControls = styled.div`
-  position: absolute;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 1.4rem;
-  z-index: 10;
-`
-
-const SlideIndicators = styled.div`
-  display: flex;
-  gap: 1.4rem;
-`
-
-const SlideButton = styled.button<{ $direction: 'left' | 'right' }>`
-  width: 3.8rem;
-  height: 3.8rem;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  font-size: 2.2rem;
-  line-height: 1;
-  padding-bottom: 0.6rem;
-  border-radius: 50%;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const PatentImageWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 22rem;
+  overflow: hidden;
   cursor: pointer;
-  z-index: 10;
-  transition: background 0.3s, transform 0.2s;
+  transition: transform 0.2s;
+  border-radius: 1.5rem;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.7);
-    transform: translateY(-0.1rem);
+    transform: scale(1.02);
   }
 `
 
-const Indicator = styled.button<{ $active: boolean }>`
+const PatentImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  border-radius: 1.5rem;
+  background: #eee; /* 이미지 로딩 전 배경 */
+`
+
+const PatentInfo = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 3rem 2rem 2rem;
+  color: white;
+`
+
+const PatentName = styled.h2`
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin: 0 0 1rem 0;
+`
+
+const Authors = styled.div`
+  font-size: 1.4rem;
+  line-height: 1.4;
+`
+
+// 모달 스타일 (ProjectPage 참조)
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: ${(props) => (props.$isOpen ? 'flex' : 'none')};
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 2rem;
+  padding: 4rem;
+  max-width: 80rem;
+  width: 90%;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+`
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 2rem;
+`
+
+const ModalTitle = styled.h2`
+  font-size: 2.6rem;
+  font-weight: bold;
+  margin: 0;
+`
+
+const ModalCloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 3.6rem;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+`
+
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  flex-shrink: 0;
+`
+
+const PaginationIndicator = styled.button<{ $active: boolean }>`
   width: 1.2rem;
   height: 1.2rem;
   border-radius: 50%;
   background: ${(props) => (props.$active ? '#333' : '#ccc')};
   border: none;
   cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
   padding: 0;
-  box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.2);
-
-  &:hover {
-    transform: scale(1.3);
-    background: ${(props) => (props.$active ? '#333' : '#999')};
-  }
 `
 
 const PatentPage = () => {
-  const [patentData, setPatentData] = useState<PatentData[]>([])
-  const [slideIndex, setSlideIndex] = useState(1)
-  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [patents, setPatents] = useState<Patent[]>([])
+  const [currentPage, setCurrentPage] = useState(0)
+  const [selectedPatent, setSelectedPatent] = useState<Patent | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchPatents = async () => {
       try {
         const data: PatentsApiResponse = await apiGet<PatentsApiResponse>(API_ENDPOINTS.PATENT)
-
-        if (data.patents && data.patents.length > 0) {
-          const viewerParams = {
-            view: 'FitH',
-            navpanes: '0',
-            pagemode: 'none',
-            toolbar: '0'
-          }
-
-          const appendViewerParams = (url: string) => {
-            const [base, hash = ''] = url.split('#', 2)
-            const searchParams = new URLSearchParams(hash)
-            Object.entries(viewerParams).forEach(([key, value]) => {
-              if (!searchParams.has(key)) searchParams.set(key, value)
-            })
-            const hashString = searchParams.toString()
-            return hashString ? `${base}#${hashString}` : url
-          }
-
-          const patentDataList = data.patents.map((patent) => ({
-            url: appendViewerParams(processImageUrl(patent.pdf_url)),
-            type: 'pdf' as const
-          }))
-          setPatentData(patentDataList)
-        }
+        setPatents(data.patents || [])
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error')
+        console.error('특허 로딩 오류:', err)
       } finally {
         setLoading(false)
       }
@@ -158,73 +191,69 @@ const PatentPage = () => {
     fetchPatents()
   }, [])
 
-  const handleTransitionEnd = () => {
-    setIsTransitioning(false)
-    if (slideIndex === 0) {
-      setSlideIndex(patentData.length)
-    } else if (slideIndex === patentData.length + 1) {
-      setSlideIndex(1)
-    }
+  const totalPages = Math.ceil(patents.length / ITEMS_PER_PAGE)
+  const displayedPatents = patents.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE)
+
+  const handlePatentClick = (patent: Patent) => {
+    setSelectedPatent(patent)
   }
 
-  const handleSlideNext = useCallback(() => {
-    if (patentData.length <= 1 || isTransitioning) return
-    setIsTransitioning(true)
-    setSlideIndex((prev) => prev + 1)
-  }, [patentData.length, isTransitioning])
-
-  const handleSlidePrev = useCallback(() => {
-    if (patentData.length <= 1 || isTransitioning) return
-    setIsTransitioning(true)
-    setSlideIndex((prev) => prev - 1)
-  }, [patentData.length, isTransitioning])
-
-  useEffect(() => {
-    if (patentData.length <= 1) return
-    const slideInterval = setInterval(handleSlideNext, 5000)
-    return () => clearInterval(slideInterval)
-  }, [patentData.length, handleSlideNext])
-
-  const handleIndicatorClick = (index: number) => {
-    if (isTransitioning) return
-    setIsTransitioning(true)
-    setSlideIndex(index + 1)
-  }
-
-  const actualSlideIndex = slideIndex <= 0 ? patentData.length - 1 : slideIndex > patentData.length ? 0 : slideIndex - 1
-
-  if (loading) return <PatentContainer><div style={{ fontSize: '2rem' }}>로딩 중...</div></PatentContainer>
-  if (error && patentData.length === 0) return <PatentContainer><div style={{ fontSize: '2rem', color: '#dc3545' }}>{error}</div></PatentContainer>
-  if (patentData.length === 0) return <PatentContainer><SlideSection><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999', fontSize: '2.4rem' }}>특허가 없습니다</div></SlideSection></PatentContainer>
+  if (loading) return <Container><div style={{ textAlign: 'center', fontSize: '2rem' }}>로딩 중...</div></Container>
 
   return (
-    <PatentContainer>
-      <SlideSection>
-        <SlideWrapper
-          $currentIndex={slideIndex}
-          $totalSlides={patentData.length}
-          $isTransitioning={isTransitioning}
-          onTransitionEnd={handleTransitionEnd}
-        >
-          <SlidePdf $totalSlides={patentData.length} src={patentData[patentData.length - 1]?.url} title="clone-last" />
-          {patentData.map((patent, index) => (
-            <SlidePdf key={index} $totalSlides={patentData.length} src={patent.url} title={`slide-${index}`} />
-          ))}
-          <SlidePdf $totalSlides={patentData.length} src={patentData[0]?.url} title="clone-first" />
-        </SlideWrapper>
-        {patentData.length > 1 && (
-          <SlideControls>
-            <SlideButton $direction="left" onClick={handleSlidePrev}>‹</SlideButton>
-            <SlideIndicators>
-              {patentData.map((_, index) => (
-                <Indicator key={index} $active={index === actualSlideIndex} onClick={() => handleIndicatorClick(index)} />
-              ))}
-            </SlideIndicators>
-            <SlideButton $direction="right" onClick={handleSlideNext}>›</SlideButton>
-          </SlideControls>
+    <Container>
+      <InfoText>특허를 클릭하면 상세 문서를 확인할 수 있습니다</InfoText>
+
+      <PatentGrid>
+        {displayedPatents.length > 0 ? (
+          displayedPatents.map((patent) => (
+            <PatentCard key={patent.id}>
+              <PatentImageWrapper onClick={() => handlePatentClick(patent)}>
+                {/* 썸네일이 없을 경우를 대비해 pdf_url이나 기본 이미지 처리 필요 */}
+                <PatentImage 
+                  src={patent.thumbnail ? processImageUrl(patent.thumbnail) : '/patent_placeholder.png'} 
+                  alt={patent.name || '특허 이미지'}
+                />
+                <PatentInfo>
+                  <PatentName>{patent.name || `${patent.name}`}</PatentName>
+                  <Authors>{patent.authors?.join(', ') || '연구진 정보 없음'}</Authors>
+                </PatentInfo>
+              </PatentImageWrapper>
+            </PatentCard>
+          ))
+        ) : (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: '2rem', color: '#666' }}>
+            등록된 특허가 없습니다
+          </div>
         )}
-      </SlideSection>
-    </PatentContainer>
+      </PatentGrid>
+
+      {totalPages > 1 && (
+        <PaginationContainer>
+          {Array.from({ length: totalPages }).map((_, index) => (
+            <PaginationIndicator
+              key={index}
+              $active={index === currentPage}
+              onClick={() => setCurrentPage(index)}
+            />
+          ))}
+        </PaginationContainer>
+      )}
+
+      {/* 특허 상세 모달 */}
+      <ModalOverlay $isOpen={!!selectedPatent}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>{selectedPatent?.name || '특허 상세 정보'}</ModalTitle>
+            <ModalCloseButton onClick={() => setSelectedPatent(null)}>×</ModalCloseButton>
+          </ModalHeader>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0', borderRadius: '1rem', fontSize: '2rem', color: '#666' }}>
+            {/* 여기에 나중에 iframe이나 PDF 뷰어를 넣으시면 됩니다 */}
+            PDF 문서 영역 (준비 중)
+          </div>
+        </ModalContent>
+      </ModalOverlay>
+    </Container>
   )
 }
 
