@@ -127,12 +127,31 @@ const PatentPage = () => {
 
         // pdf_url을 처리하여 저장 (모두 PDF)
         if (data.patents && data.patents.length > 0) {
+          // PDF 뷰어 기본 파라미터 설정(사이드바/툴바 숨김)
+          const viewerParams = {
+            view: 'FitH',
+            navpanes: '0',
+            pagemode: 'none',
+            toolbar: '0'
+          }
+
+          const appendViewerParams = (url: string) => {
+            const [base, hash = ''] = url.split('#', 2)
+            const searchParams = new URLSearchParams(hash)
+
+            Object.entries(viewerParams).forEach(([key, value]) => {
+              if (!searchParams.has(key)) {
+                searchParams.set(key, value)
+              }
+            })
+
+            const hashString = searchParams.toString()
+            return hashString ? `${base}#${hashString}` : url
+          }
+
           const patentDataList = data.patents.map((patent) => {
             const processedUrl = processImageUrl(patent.pdf_url)
-            // PDF를 꽉 차게 표시하기 위한 파라미터 추가
-            const pdfUrl = processedUrl.includes('#') 
-              ? processedUrl 
-              : `${processedUrl}#view=FitH`
+            const pdfUrl = appendViewerParams(processedUrl)
             return {
               url: pdfUrl,
               type: 'pdf' as const
