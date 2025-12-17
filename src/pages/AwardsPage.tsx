@@ -61,16 +61,19 @@ const SlideSet = styled.div`
   display: flex;
   width: 50%; /* 트랙의 절반 = 화면 전체 */
   height: 100%;
+  gap: 0.75rem;
+  padding: 0 0.75rem;
+  box-sizing: border-box;
 `
 
 const AwardItem = styled.div<{ $itemsPerView: number }>`
-  flex: 0 0 calc(100% / ${(props) => props.$itemsPerView});
-  max-width: calc(100% / ${(props) => props.$itemsPerView});
+  flex: 1 1 0;
+  min-width: 0;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0;
   box-sizing: border-box;
   flex-shrink: 0;
 `
