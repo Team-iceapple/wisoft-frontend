@@ -86,6 +86,20 @@ const ProjectCard = styled.div`
   min-height: 0;
 `
 
+const SpecialNote = styled.div`
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.7rem 1.2rem;
+  border-radius: 0.6rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  z-index: 10;
+  text-align: center;
+`
+
 const ProjectImageWrapper = styled.div`
   position: relative;
   width: 100%;
