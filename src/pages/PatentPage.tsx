@@ -79,7 +79,10 @@ const SlideButton = styled.button<{ $direction: 'left' | 'right' }>`
   background: rgba(0, 0, 0, 0.5);
   color: white;
   font-size: 2.2rem;
+  line-height: 1;
+  padding-bottom: 0.6rem;
   border-radius: 50%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
