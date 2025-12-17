@@ -213,6 +213,16 @@ const ModalContent = styled.div`
   animation: ${slideUp} 0.3s ease;
 `
 
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 1.2rem;
+  padding: 0;
+  position: relative;
+`
+
 const ModalTitle = styled.h2`
   font-size: 3rem;
   font-weight: bold;
@@ -232,20 +242,23 @@ const ModalQRCode = styled.div`
 
 const ModalCloseButton = styled.button`
   position: absolute;
-  top: 2rem;
-  right: 2rem;
+  top: -4rem;
+  right: -2.0rem;
+  transform: none;
   background: none;
   border: none;
-  font-size: 4rem;
+  font-size: 3.6rem;
   cursor: pointer;
   color: #666;
-  width: 5rem;
-  height: 5rem;
+  width: 4.4rem;
+  height: 4.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   transition: background 0.2s;
+  line-height: 1;
+  padding: 0;
 
   &:hover {
     background: #f0f0f0;
@@ -453,30 +466,32 @@ const ProjectPage = () => {
         $isOpen={!!selectedProject || loadingDetail}
       >
         <ModalContent>
-          <ModalCloseButton onClick={handleCloseModal}>×</ModalCloseButton>
+          <ModalHeader>
+            <ModalTitle>
+              {loadingDetail ? '로딩 중...' : selectedProject?.projectName ?? ''}
+            </ModalTitle>
+            <ModalCloseButton onClick={handleCloseModal} aria-label="닫기">×</ModalCloseButton>
+          </ModalHeader>
           {loadingDetail ? (
-            <div style={{ fontSize: '2rem', padding: '4rem' }}>로딩 중...</div>
+            <div style={{ fontSize: '2rem', padding: '2rem' }}>로딩 중...</div>
           ) : selectedProject ? (
-            <>
-              <ModalTitle>{selectedProject.projectName}</ModalTitle>
-              {selectedProject.qrLink ? (
-                <>
-                  <ModalQRCode>
-                    <QRCodeSVG
-                      value={selectedProject.qrLink}
-                      size={300}
-                      level="H"
-                      includeMargin={false}
-                    />
-                  </ModalQRCode>
-                  <ModalLink>{selectedProject.qrLink}</ModalLink>
-                </>
-              ) : (
-                <div style={{ fontSize: '1.8rem', color: '#666', padding: '2rem' }}>
-                  배포 링크가 없습니다.
-                </div>
-              )}
-            </>
+            selectedProject.qrLink ? (
+              <>
+                <ModalQRCode>
+                  <QRCodeSVG
+                    value={selectedProject.qrLink}
+                    size={300}
+                    level="H"
+                    includeMargin={false}
+                  />
+                </ModalQRCode>
+                <ModalLink>{selectedProject.qrLink}</ModalLink>
+              </>
+            ) : (
+              <div style={{ fontSize: '1.8rem', color: '#666', padding: '2rem' }}>
+                배포 링크가 없습니다.
+              </div>
+            )
           ) : null}
         </ModalContent>
       </ModalOverlay>
