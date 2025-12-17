@@ -88,6 +88,11 @@ const SlideImage = styled.img<{ $totalSlides: number }>`
   object-fit: cover;
   object-position: center;
   flex-shrink: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
 `
 
 const SlideButton = styled.button<{ $direction: 'left' | 'right' }>`
@@ -627,13 +632,32 @@ const HomePage = () => {
           {/* 마지막 이미지 클론 (무한 루프용) */}
           {slideImages.length > 0 && (
             <>
-              <SlideImage $totalSlides={slideImages.length} src={slideImages[slideImages.length - 1]} alt="Slide clone last" />
+              <SlideImage 
+                $totalSlides={slideImages.length} 
+                src={slideImages[slideImages.length - 1]} 
+                alt="Slide clone last"
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+              />
               {/* 실제 이미지들 */}
               {slideImages.map((image, index) => (
-                <SlideImage key={index} $totalSlides={slideImages.length} src={image} alt={`Slide ${index + 1}`} />
+                <SlideImage 
+                  key={index} 
+                  $totalSlides={slideImages.length} 
+                  src={image} 
+                  alt={`Slide ${index + 1}`}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
+                />
               ))}
               {/* 첫 번째 이미지 클론 (무한 루프용) */}
-              <SlideImage $totalSlides={slideImages.length} src={slideImages[0]} alt="Slide clone first" />
+              <SlideImage 
+                $totalSlides={slideImages.length} 
+                src={slideImages[0]} 
+                alt="Slide clone first"
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+              />
             </>
           )}
         </SlideWrapper>

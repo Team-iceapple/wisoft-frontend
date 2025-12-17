@@ -145,6 +145,11 @@ const ProjectImage = styled.img`
   object-fit: cover;
   opacity: 0.7;
   border-radius: 1.5rem;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
 `
 
 const ProjectInfo = styled.div`
@@ -429,6 +434,8 @@ const ProjectPage = () => {
                 <ProjectImage 
                   src={project.image} 
                   alt={project.projectName}
+                  draggable={false}
+                  onDragStart={(e) => e.preventDefault()}
                 />
                 <ProjectInfo>
                   <ProjectNameContainer>
