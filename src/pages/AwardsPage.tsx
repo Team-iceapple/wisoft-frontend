@@ -15,11 +15,20 @@ interface AwardsApiResponse {
   awards: Award[]
 }
 
-// 각 줄당 상장 개수
-const ITEMS_PER_ROW = 4
+// 슬라이드 라인/열 설정
+const ROW_COUNT = 3
+const ITEMS_PER_VIEW = 3 // 한 번에 보여줄 아이템 수
+const ANIMATION_DURATIONS = [30, 36, 32] as const // 느린 속도로 유지
+const ROW_DIRECTIONS: Array<'normal' | 'reverse'> = ['normal', 'reverse', 'normal']
 
-// 각 줄별 애니메이션 속도 (초)
-const ANIMATION_DURATIONS = [20, 25, 30] // 각 줄마다 다른 속도
+const slide = keyframes`
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+`
 
 const AwardsContainer = styled.div`
   display: flex;
@@ -39,25 +48,24 @@ const AwardRow = styled.div<{ $totalRows: number }>`
   overflow: hidden;
 `
 
-// 무한 스크롤 애니메이션 생성
-const createSlideAnimation = (duration: number, itemWidth: number) => keyframes`
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-${itemWidth}%);
-  }
-`
-
-const SlideWrapper = styled.div<{ $duration: number; $itemWidth: number }>`
+const SlideWrapper = styled.div<{ $duration: number; $reverse: boolean }>`
   display: flex;
   width: 200%; /* 원본 + 복제본 */
   height: 100%;
-  animation: ${(props) => createSlideAnimation(props.$duration, props.$itemWidth)} ${(props) => props.$duration}s linear infinite;
+  animation: ${slide} ${(props) => props.$duration}s linear infinite;
+  animation-direction: ${(props) => (props.$reverse ? 'reverse' : 'normal')};
+  will-change: transform;
 `
 
-const AwardItem = styled.div<{ $itemWidth: number }>`
-  width: ${(props) => props.$itemWidth}%;
+const SlideSet = styled.div`
+  display: flex;
+  width: 50%; /* 트랙의 절반 = 화면 전체 */
+  height: 100%;
+`
+
+const AwardItem = styled.div<{ $itemsPerView: number }>`
+  flex: 0 0 calc(100% / ${(props) => props.$itemsPerView});
+  max-width: calc(100% / ${(props) => props.$itemsPerView});
   height: 100%;
   display: flex;
   align-items: center;
@@ -74,6 +82,38 @@ const AwardImage = styled.img`
   height: auto;
   object-fit: contain;
 `
+
+const distributeIntoRows = (items: string[]): string[][] => {
+  const rows = Array.from({ length: ROW_COUNT }, () => [] as string[])
+
+  items.forEach((image, index) => {
+    rows[index % ROW_COUNT].push(image)
+  })
+
+  // 데이터가 부족한 경우에도 3열을 유지하기 위해 최소 1개씩 채워 넣음
+  if (items.length > 0) {
+    rows.forEach((row, rowIndex) => {
+      if (row.length === 0) {
+        rows[rowIndex].push(items[rowIndex % items.length])
+      }
+    })
+  }
+
+  return rows
+}
+
+const ensureMinimumItems = (items: string[], minCount: number): string[] => {
+  if (items.length === 0) return []
+  if (items.length >= minCount) return items
+
+  const extended = [...items]
+  let index = 0
+  while (extended.length < minCount) {
+    extended.push(items[index % items.length])
+    index += 1
+  }
+  return extended
+}
 
 const AwardsPage = () => {
   const [awardImages, setAwardImages] = useState<string[]>([])
@@ -110,15 +150,7 @@ const AwardsPage = () => {
     fetchAwards()
   }, [])
 
-  // 동적으로 줄 수 계산
-  const TOTAL_ROWS = Math.ceil(awardImages.length / ITEMS_PER_ROW)
-
-  // 각 줄의 상장 목록을 분리
-  const getRowItems = (rowIndex: number): string[] => {
-    const start = rowIndex * ITEMS_PER_ROW
-    const end = start + ITEMS_PER_ROW
-    return awardImages.slice(start, end)
-  }
+  const rows = distributeIntoRows(awardImages)
 
   if (loading) {
     return (
@@ -142,34 +174,27 @@ const AwardsPage = () => {
 
   return (
     <AwardsContainer>
-      {Array.from({ length: TOTAL_ROWS }).map((_, rowIndex) => {
-        const rowItems = getRowItems(rowIndex)
-        if (rowItems.length === 0) return null
+      {rows.map((rowItems, rowIndex) => {
+        const displayItems = ensureMinimumItems(rowItems, ITEMS_PER_VIEW)
+        if (displayItems.length === 0) return null
 
-        const itemWidth = 100 / ITEMS_PER_ROW // 각 아이템이 차지하는 너비 (%)
         const duration = ANIMATION_DURATIONS[rowIndex % ANIMATION_DURATIONS.length]
+        const isReverse = ROW_DIRECTIONS[rowIndex % ROW_DIRECTIONS.length] === 'reverse'
 
         return (
-          <AwardRow key={rowIndex} $totalRows={TOTAL_ROWS}>
-            <SlideWrapper $duration={duration} $itemWidth={itemWidth * ITEMS_PER_ROW}>
-              {/* 원본 이미지들 */}
-              {rowItems.map((image, index) => (
-                <AwardItem key={`original-${index}`} $itemWidth={itemWidth}>
-                  <AwardImage
-                    src={image}
-                    alt={`Award row ${rowIndex + 1} item ${index + 1}`}
-                  />
-                </AwardItem>
-              ))}
-              
-              {/* 복제본 이미지들 (무한 루프용) */}
-              {rowItems.map((image, index) => (
-                <AwardItem key={`clone-${index}`} $itemWidth={itemWidth}>
-                  <AwardImage
-                    src={image}
-                    alt={`Award row ${rowIndex + 1} clone ${index + 1}`}
-                  />
-                </AwardItem>
+          <AwardRow key={rowIndex} $totalRows={ROW_COUNT}>
+            <SlideWrapper $duration={duration} $reverse={isReverse}>
+              {[0, 1].map((cloneIndex) => (
+                <SlideSet key={`${rowIndex}-set-${cloneIndex}`}>
+                  {displayItems.map((image, index) => (
+                    <AwardItem key={`${rowIndex}-${cloneIndex}-${index}`} $itemsPerView={ITEMS_PER_VIEW}>
+                      <AwardImage
+                        src={image}
+                        alt={`Award row ${rowIndex + 1} item ${index + 1}`}
+                      />
+                    </AwardItem>
+                  ))}
+                </SlideSet>
               ))}
             </SlideWrapper>
           </AwardRow>

@@ -4,13 +4,14 @@ import { apiGet, API_ENDPOINTS, processImageUrl, API_BASE_URL } from '../utils/a
 
 // API 응답 타입 정의
 interface CalendarEvent {
-  id: number
+  id: string | number
   title: string
+  start: string
+  end?: string
+  all_day?: boolean
 }
 
 interface Calendar {
-  range_start: string
-  range_end: string
   events: CalendarEvent[]
 }
 
@@ -21,9 +22,8 @@ interface Lab {
 }
 
 interface Project {
-  id: number
-  title: string
-  grade: number
+  id: string | number
+  name: string
 }
 
 interface News {
@@ -49,6 +49,8 @@ interface NewsItem {
 interface ScheduleItem {
   date: string
   title: string
+  startDate: Date
+  time?: string
 }
 
 // 스타일 컴포넌트
@@ -275,17 +277,22 @@ const ProjectList = styled.ul`
 
 const ProjectItem = styled.li`
   font-size: 1.6rem;
-  padding: 1.5rem;
+  padding: 1.5rem 1.5rem 1.5rem 3.5rem;
   background: white;
   border-radius: 1rem;
   position: relative;
   color: #333;
   box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  line-height: 1.6;
 
   &::before {
     content: '•';
     position: absolute;
     left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
     color: #007bff;
     font-size: 2.2rem;
   }
@@ -360,6 +367,43 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const formatEventDate = (startStr: string, endStr?: string, allDay?: boolean) => {
+    const startDate = new Date(startStr)
+    const endDate = endStr ? new Date(endStr) : null
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토']
+
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear().toString().slice(-2)
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const weekday = weekdays[date.getDay()]
+      return `${year}/${month}/${day}(${weekday})`
+    }
+
+    const formatTime = (date: Date) => {
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      return `${hours}:${minutes}`
+    }
+
+    if (allDay || !endDate) {
+      return { dateLine: formatDate(startDate), timeLine: undefined }
+    }
+
+    const sameDay = formatDate(startDate) === formatDate(endDate)
+    if (sameDay) {
+      return {
+        dateLine: formatDate(startDate),
+        timeLine: `${formatTime(startDate)}-${formatTime(endDate)}`,
+      }
+    }
+
+    return {
+      dateLine: `${formatDate(startDate)} ~ ${formatDate(endDate)}`,
+      timeLine: `${formatTime(startDate)}-${formatTime(endDate)}`,
+    }
+  }
+
   // API 데이터 가져오기
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -374,21 +418,18 @@ const HomePage = () => {
         }
 
         // Calendar 데이터 변환 및 설정
-        const formattedSchedule: ScheduleItem[] = data.calendar.events.map((event) => {
-          // range_start를 기준으로 날짜 포맷팅 (ISO 8601 -> YY/MM/DD(요일) 형식)
-          const eventDate = new Date(data.calendar.range_start)
-          const year = eventDate.getFullYear().toString().slice(-2)
-          const month = String(eventDate.getMonth() + 1).padStart(2, '0')
-          const day = String(eventDate.getDate()).padStart(2, '0')
-          const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-          const weekday = weekdays[eventDate.getDay()]
-          const formattedDate = `${year}/${month}/${day}(${weekday})`
-          
-          return {
-            date: formattedDate,
-            title: event.title,
-          }
-        })
+        const formattedSchedule: ScheduleItem[] =
+          data.calendar.events?.map((event) => {
+            const startDate = new Date(event.start)
+            const { dateLine, timeLine } = formatEventDate(event.start, event.end, event.all_day)
+            return {
+              date: dateLine,
+              title: event.title,
+              startDate,
+              time: timeLine,
+            }
+          }) ?? []
+
         setScheduleItems(formattedSchedule)
 
         // Projects 데이터 설정
@@ -486,16 +527,7 @@ const HomePage = () => {
     const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
 
     const filtered = scheduleItems.filter((item) => {
-      // 날짜 문자열 파싱 (YY/MM/DD 형식)
-      const dateMatch = item.date.match(/(\d{2})\/(\d{2})\/(\d{2})/)
-      if (!dateMatch) return false
-      
-      const [, yearStr, monthStr, dayStr] = dateMatch
-      const year = 2000 + parseInt(yearStr, 10)
-      const month = parseInt(monthStr, 10) - 1
-      const day = parseInt(dayStr, 10)
-      
-      const itemDate = new Date(year, month, day)
+      const itemDate = new Date(item.startDate)
       itemDate.setHours(0, 0, 0, 0)
       return itemDate >= today && itemDate <= weekFromNow
     })
@@ -507,28 +539,7 @@ const HomePage = () => {
 
   const actualSlideIndex = slideIndex <= 0 ? slideImages.length - 1 : slideIndex > slideImages.length ? 0 : slideIndex - 1
 
-  useEffect(() => {
-    if (newsItems.length <= 1) return
-
-    const newsInterval = setInterval(() => {
-      handleNewsCardNext()
-    }, 5000)
-
-    return () => clearInterval(newsInterval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newsCardIndex])
-
-  useEffect(() => {
-    if (!isNewsTransitioning) {
-      if (newsCardIndex === 0) {
-        setNewsCardIndex(newsItems.length)
-      } else if (newsCardIndex === newsItems.length + 1) {
-        setNewsCardIndex(1)
-      }
-    }
-  }, [isNewsTransitioning, newsCardIndex])
-
-  const handleNewsCardNext = () => {
+  const handleNewsCardNext = useCallback(() => {
     if (newsItems.length <= 1) return
 
     if (newsCardIndex === newsItems.length) {
@@ -545,7 +556,27 @@ const HomePage = () => {
         setIsNewsTransitioning(false)
       }, 500)
     }
-  }
+  }, [newsCardIndex, newsItems.length])
+
+  useEffect(() => {
+    if (newsItems.length <= 1) return
+
+    const newsInterval = setInterval(() => {
+      handleNewsCardNext()
+    }, 5000)
+
+    return () => clearInterval(newsInterval)
+  }, [newsItems.length, newsCardIndex, handleNewsCardNext])
+
+  useEffect(() => {
+    if (!isNewsTransitioning) {
+      if (newsCardIndex === 0) {
+        setNewsCardIndex(newsItems.length)
+      } else if (newsCardIndex === newsItems.length + 1) {
+        setNewsCardIndex(1)
+      }
+    }
+  }, [isNewsTransitioning, newsCardIndex])
 
   const truncateContent = (content: string, maxLength: number = 45) => {
     if (content.length <= maxLength) return content
@@ -554,7 +585,7 @@ const HomePage = () => {
 
   // 프로젝트 포맷팅 함수
   const formatProject = (project: Project) => {
-    return `${project.title} (${project.grade}학년)`
+    return project.name
   }
 
   if (loading) {
@@ -639,7 +670,10 @@ const HomePage = () => {
               <Timeline>
                 {upcomingSchedule.map((item, index) => (
                   <TimelineItem key={index}>
-                    <TimelineDate>{item.date}</TimelineDate>
+                    <TimelineDate>
+                      <div>{item.date}</div>
+                      {item.time && <div>{item.time}</div>}
+                    </TimelineDate>
                     <TimelineContent>{item.title}</TimelineContent>
                   </TimelineItem>
                 ))}
@@ -668,29 +702,38 @@ const HomePage = () => {
           <NewsBox>
             <BoxTitle>와이소프트 소식</BoxTitle>
             <NewsContainer>
-              <NewsCardWrapper
-                $currentIndex={newsCardIndex}
-                $totalCards={newsItems.length}
-                $isTransitioning={isNewsTransitioning}
-              >
-                {/* 마지막 카드 클론 (무한 루프용) */}
-                <NewsCard $totalCards={newsItems.length}>
-                  <NewsCardTitle>{newsItems[newsItems.length - 1].title}</NewsCardTitle>
-                  <NewsCardContent>{truncateContent(newsItems[newsItems.length - 1].content)}</NewsCardContent>
-                </NewsCard>
-                {/* 실제 카드들 */}
-                {newsItems.map((news, index) => (
-                  <NewsCard key={index} $totalCards={newsItems.length}>
-                    <NewsCardTitle>{news.title}</NewsCardTitle>
-                    <NewsCardContent>{truncateContent(news.content)}</NewsCardContent>
+              {newsItems.length > 0 ? (
+                <NewsCardWrapper
+                  $currentIndex={newsCardIndex}
+                  $totalCards={newsItems.length}
+                  $isTransitioning={isNewsTransitioning}
+                >
+                  {/* 마지막 카드 클론 (무한 루프용) */}
+                  <NewsCard $totalCards={newsItems.length}>
+                    <NewsCardTitle>{newsItems[newsItems.length - 1].title}</NewsCardTitle>
+                    <NewsCardContent>{truncateContent(newsItems[newsItems.length - 1].content)}</NewsCardContent>
                   </NewsCard>
-                ))}
-                {/* 첫 번째 카드 클론 (무한 루프용) */}
-                <NewsCard $totalCards={newsItems.length}>
-                  <NewsCardTitle>{newsItems[0].title}</NewsCardTitle>
-                  <NewsCardContent>{truncateContent(newsItems[0].content)}</NewsCardContent>
-                </NewsCard>
-              </NewsCardWrapper>
+                  {/* 실제 카드들 */}
+                  {newsItems.map((news, index) => (
+                    <NewsCard key={index} $totalCards={newsItems.length}>
+                      <NewsCardTitle>{news.title}</NewsCardTitle>
+                      <NewsCardContent>{truncateContent(news.content)}</NewsCardContent>
+                    </NewsCard>
+                  ))}
+                  {/* 첫 번째 카드 클론 (무한 루프용) */}
+                  <NewsCard $totalCards={newsItems.length}>
+                    <NewsCardTitle>{newsItems[0].title}</NewsCardTitle>
+                    <NewsCardContent>{truncateContent(newsItems[0].content)}</NewsCardContent>
+                  </NewsCard>
+                </NewsCardWrapper>
+              ) : (
+                <NewsCardWrapper $currentIndex={1} $totalCards={1} $isTransitioning={false}>
+                  <NewsCard $totalCards={1}>
+                    <NewsCardTitle>소식이 없습니다</NewsCardTitle>
+                    <NewsCardContent>등록된 소식이 없습니다.</NewsCardContent>
+                  </NewsCard>
+                </NewsCardWrapper>
+              )}
             </NewsContainer>
           </NewsBox>
         </RightColumn>
