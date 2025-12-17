@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom'
 import styled from 'styled-components'
-import { FaHome, FaLaptop, FaFileAlt, FaTrophy, FaCertificate, FaChalkboardTeacher } from 'react-icons/fa'
+import { FaHome, FaLaptop, FaFileAlt, FaTrophy, FaCertificate, FaChalkboardTeacher, FaUsers } from 'react-icons/fa'
 
 const HeaderContainer = styled.header`
     display: flex;
@@ -19,7 +19,7 @@ const Title = styled.h1`
 
 const Nav = styled.nav`
     display: flex;
-    gap: 1.5rem;
+    gap: 0;
 `
 
 const NavIcon = styled(Link)`
@@ -28,7 +28,7 @@ const NavIcon = styled(Link)`
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
-    padding: 0.8rem;
+    padding: 1rem 1.5rem;
     border-radius: 0.8rem;
     text-decoration: none;
     color: #000;
@@ -58,6 +58,7 @@ const getTitle = (pathname: string): string => {
     if (pathname.startsWith('/awards')) return 'Awards'
     if (pathname.startsWith('/patent')) return 'Patent'
     if (pathname.startsWith('/seminar')) return 'Seminar'
+    if (pathname.startsWith('/member')) return 'Member'
     if (pathname.startsWith('/gallery')) return 'Photo'
     return 'WiSoft'
 }
@@ -105,6 +106,12 @@ const Header = () => {
                         <FaChalkboardTeacher />
                     </IconWrapper>
                     <NavText>Seminar</NavText>
+                </NavIcon>
+                <NavIcon to="/member">
+                    <IconWrapper>
+                        <FaUsers />
+                    </IconWrapper>
+                    <NavText>Member</NavText>
                 </NavIcon>
             </Nav>
         </HeaderContainer>

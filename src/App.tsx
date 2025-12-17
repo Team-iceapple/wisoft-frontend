@@ -6,6 +6,7 @@ import PaperPage from './pages/PaperPage'
 import AwardsPage from './pages/AwardsPage'
 import PatentPage from './pages/PatentPage'
 import SeminarPage from './pages/SeminarPage'
+import MemberPage from './pages/MemberPage'
 
 function App() {
     return (
@@ -18,6 +19,7 @@ function App() {
                     <Route path="awards" element={<AwardsPage />} />
                     <Route path="patent" element={<PatentPage />} />
                     <Route path="seminar" element={<SeminarPage />} />
+                    <Route path="member" element={<MemberPage />} />
                 </Route>
             </Routes>
         </BrowserRouter>
