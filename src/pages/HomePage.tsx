@@ -367,9 +367,11 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const sanitizeDateString = (value?: string) => (value ? value.split('[')[0] : value)
+
   const formatEventDate = (startStr: string, endStr?: string, allDay?: boolean) => {
-    const startDate = new Date(startStr)
-    const endDate = endStr ? new Date(endStr) : null
+    const startDate = new Date(sanitizeDateString(startStr) || startStr)
+    const endDate = endStr ? new Date(sanitizeDateString(endStr) || endStr) : null
     const weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
     const formatDate = (date: Date) => {
@@ -420,8 +422,10 @@ const HomePage = () => {
         // Calendar 데이터 변환 및 설정
         const formattedSchedule: ScheduleItem[] =
           data.calendar.events?.map((event) => {
-            const startDate = new Date(event.start)
-            const { dateLine, timeLine } = formatEventDate(event.start, event.end, event.all_day)
+            const sanitizedStart = sanitizeDateString(event.start) || event.start
+            const sanitizedEnd = event.end ? sanitizeDateString(event.end) : undefined
+            const startDate = new Date(sanitizedStart)
+            const { dateLine, timeLine } = formatEventDate(sanitizedStart, sanitizedEnd, event.all_day)
             return {
               date: dateLine,
               title: event.title,
