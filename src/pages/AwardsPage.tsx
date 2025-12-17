@@ -125,7 +125,7 @@ const AwardsPage = () => {
     const fetchAwards = async () => {
       try {
         const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-        const response = await fetch(`${apiBaseUrl}/awards`)
+        const response = await fetch(`${apiBaseUrl}/api/awards`)
 
         if (!response.ok) {
           throw new Error('수상 데이터를 불러오는 데 실패했습니다.')

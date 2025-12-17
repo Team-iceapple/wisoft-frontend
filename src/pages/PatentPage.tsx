@@ -51,13 +51,6 @@ const SlideWrapper = styled.div<{ $currentIndex: number; $totalSlides: number; $
   transition: ${(props) => (props.$isTransitioning ? 'transform 0.5s ease-in-out' : 'none')};
 `
 
-const SlideImage = styled.img<{ $totalSlides: number }>`
-  width: ${(props) => 100 / (props.$totalSlides + 2)}%;
-  height: 100%;
-  object-fit: cover;
-  flex-shrink: 0;
-`
-
 const SlidePdf = styled.iframe<{ $totalSlides: number }>`
   width: ${(props) => 100 / (props.$totalSlides + 2)}%;
   height: 100%;
